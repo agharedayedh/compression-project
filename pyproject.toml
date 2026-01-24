@@ -3,11 +3,14 @@ name = "compression-project"
 version = "0.1.0"
 description = "Lossless text compression using Huffman coding and LZ77"
 readme = "README.md"
-packages = [{ include = "compression", from = "src" }]
+requires-python = ">=3.11,<4.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [{ include = "compression", from = "src" }]
 
 [dependency-groups]
 dev = [

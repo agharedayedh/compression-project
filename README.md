@@ -34,28 +34,30 @@ compression in terms of compression ratio, behavior, and algorithmic structure. 
 
 ## Project Structure
 
+```text
 compression-project/
 ├── src/
-│ └── compression/
-│ ├── init.py
-│ └── main.py
+│   └── compression/
+│       ├── __init__.py
+│       └── main.py
 ├── tests/
-│ ├── test_huffman.py
-│ ├── test_lz77.py
-│ └── test_end_to_end.py
+│   ├── test_huffman.py
+│   ├── test_lz77.py
+│   └── test_end_to_end.py
 ├── data/
-│ ├── sample_small.txt
-│ └── sample_large.txt
+│   ├── sample_small.txt
+│   └── sample_large.txt
 ├── docs/
-│ ├── specification.md
-│ ├── implementation.md
-│ ├── testing.md
-│ ├── user_guide.md
-│ ├── weekly_report_1.md
-│ └── weekly_report_2.md
-├── README.md
+│   ├── specification.md
+│   ├── implementation.md
+│   ├── testing.md
+│   ├── user_guide.md
+│   ├── weekly_report_1.md
+│   └── weekly_report_2.md
 ├── pyproject.toml
+├── README.md
 └── .gitignore
+```
 
 ---
 
@@ -77,6 +79,7 @@ Clone the repository and install dependencies:
 git clone git@github.com:agharedyedh/compression-project.git
 cd compression-project
 py -m poetry install
+```
 
 ---
 
