@@ -1,0 +1,37 @@
+[project]
+name = "compression-project"
+version = "0.1.0"
+description = "Lossless text compression using Huffman coding and LZ77"
+readme = "README.md"
+packages = [{ include = "compression", from = "src" }]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.2,<10.0.0)",
+    "pytest-cov (>=7.0.0,<8.0.0)",
+    "ruff (>=0.14.14,<0.15.0)"
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.coverage.run]
+branch = true
+source = ["compression"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
