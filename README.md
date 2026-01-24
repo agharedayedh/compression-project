@@ -32,35 +32,6 @@ compression in terms of compression ratio, behavior, and algorithmic structure. 
 
 ---
 
-## Project Structure
-
-```text
-compression-project/
-├── src/
-│   └── compression/
-│       ├── __init__.py
-│       └── main.py
-├── tests/
-│   ├── test_huffman.py
-│   ├── test_lz77.py
-│   └── test_end_to_end.py
-├── data/
-│   ├── sample_small.txt
-│   └── sample_large.txt
-├── docs/
-│   ├── specification.md
-│   ├── implementation.md
-│   ├── testing.md
-│   ├── user_guide.md
-│   ├── weekly_report_1.md
-│   └── weekly_report_2.md
-├── pyproject.toml
-├── README.md
-└── .gitignore
-```
-
----
-
 ## Requirements
 
 - Python 3.11+
@@ -76,7 +47,8 @@ All dependencies are managed through Poetry and specified in `pyproject.toml`.
 Clone the repository and install dependencies:
 
 ```bash
-git clone git@github.com:agharedyedh/compression-project.git
+git clone git@github.com:agharedyedh
+compression-project.git
 cd compression-project
 py -m poetry install
 ```
@@ -86,7 +58,10 @@ py -m poetry install
 ## Running the Program
 
 The main program can be executed using:
-`py -m poetry run python -m compression.main`
+
+```bash
+py -m poetry run python -m compression.main
+```
 
 The program supports compressing and decompressing text files using the implemented
 algorithms. Detailed usage instructions, command-line options, and examples are provided
@@ -100,10 +75,16 @@ Automated tests are implemented using pytest and include both unit tests and end
 tests.
 
 Run all tests:
-`py -m poetry run pytest`
+
+```bash
+py -m poetry run pytest
+```
 
 Run tests with coverage reporting:
-`py -m poetry run pytest --cov`
+
+```bash
+py -m poetry run pytest --cov
+```
 
 
 Testing focuses on:

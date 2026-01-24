@@ -1,23 +1,21 @@
-[project]
+[tool.poetry]
 name = "compression-project"
 version = "0.1.0"
 description = "Lossless text compression using Huffman coding and LZ77"
 readme = "README.md"
-requires-python = ">=3.11,<4.0"
+packages = [{ include = "compression", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^9.0.0"
+pytest-cov = "^7.0.0"
+ruff = "^0.14.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
-packages = [{ include = "compression", from = "src" }]
-
-[dependency-groups]
-dev = [
-    "pytest (>=9.0.2,<10.0.0)",
-    "pytest-cov (>=7.0.0,<8.0.0)",
-    "ruff (>=0.14.14,<0.15.0)"
-]
 
 [tool.ruff]
 line-length = 100

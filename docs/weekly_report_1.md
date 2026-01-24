@@ -1,26 +1,22 @@
 # Weekly Report 1
 
-## Overview
+## Time spent
+Approximately 8–10 hours.
 
-During the first week of the project, the main focus was on defining the project topic, setting the scope, and initializing the project repository with proper project management tools. The goal of this week was to ensure that the project is well planned and technically ready for further development in the upcoming weeks.
+## What did I do this week?
+During the first week of the project, I focused on planning and setting up the foundation for the entire project. I selected the project topic, defined its scope, and initialized the project repository. I also set up the development environment and project management tools to ensure that further development can proceed smoothly.
 
-## Topic and Scope
+In addition, I wrote the initial documentation, including the specification document and the project README.
 
-The chosen project topic is **lossless text compression**, focusing on the implementation and comparison of two classical compression algorithms: **Huffman coding** and **LZ77**. The project aims to compress text files efficiently and restore them exactly to their original form after decompression. The scope was intentionally defined to be algorithm-focused, with emphasis on correctness, efficiency, and clean implementation rather than visualization or user interface features.
+## How has the program progressed?
+At this stage, the project has not yet progressed to algorithm implementation, but it is now fully prepared for development. The repository structure is in place, dependency management is configured, and the project is technically ready for coding and testing in the coming weeks.
 
-The programming language selected for the project is **Python**, as it is well suited for algorithmic development and testing. The scope of the project was assessed to be sufficiently challenging and appropriate for the course requirements.
 
-## Repository and Project Setup
+## What did I learn this week/today?
+This week reinforced the importance of careful project planning before starting implementation. Defining the scope early helped clarify what the project will and will not include. I also gained more experience using Poetry for dependency and environment management, which will be useful for maintaining a clean and reproducible development setup.
 
-A GitHub repository was created for the project, and a clear directory structure was established, including separate folders for source code, tests, documentation, and sample data. GitHub Issues were enabled to support future task tracking and project management.
+## What remains unclear or has been challenging?
+One challenge was deciding how broad the project scope should be while still keeping it manageable within the course timeframe. Balancing ambition with realism required careful consideration. At this point, the high-level plan is clear, but some implementation details will become clearer once coding begins.
 
-For dependency and environment management, **Poetry** was selected and configured. The `pyproject.toml` file defines the project metadata, Python version requirements, development dependencies, and tool configurations. This ensures reproducibility and consistency across development environments.
-
-## Documentation
-
-A detailed **Specification Document** was written, describing the problem being solved, the algorithms and data structures to be implemented, expected time and space complexities, and the core focus of the project. Additionally, a README file was created to explain the project purpose, structure, installation steps, and usage instructions.
-
-## Next Steps
-
-In the next week, the focus will shift to implementing the core compression algorithms and writing unit tests alongside the code. Initial versions of Huffman coding and LZ77 will be developed, and testing will be expanded to verify correctness and robustness.
-
+## What will I do next?
+Next week, I will start implementing the core algorithms of the project, beginning with Huffman coding. I will also begin writing unit tests alongside the implementation to verify correctness from the start. 
