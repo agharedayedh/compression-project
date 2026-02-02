@@ -17,7 +17,9 @@ The testing effort will be expanded in later weeks as more functionality (such a
 - **Tree construction behavior**  
   Tests ensure that valid Huffman trees can be built from character frequency tables without runtime errors.
 
-These tests are implemented as unit tests using `pytest` and are located in `tests/test_huffman.py`
+These tests are implemented as unit tests using `pytest` and are located in:
+
+- `tests/test_huffman.py`
 
 ---
 
@@ -29,7 +31,9 @@ These tests are implemented as unit tests using `pytest` and are located in `tes
 
 This ensures that the core compression–decompression workflow functions correctly at a basic level.
 
-The end-to-end test is located in `tests/test_end_to_end.py`
+The end-to-end test is located in:
+
+- `tests/test_end_to_end.py`
 
 ---
 
@@ -46,14 +50,61 @@ Larger files and randomized inputs will be introduced in later testing phases.
 ## How to Run the Tests
 
 All tests can be executed in bash using:
-`py -m poetry run pytest`
+
+```bash
+py -m poetry run pytest
+```
 
 ## Test Coverage
 
 Test coverage is tracked using pytest-cov. To run tests with coverage reporting:
-`py -m poetry run pytest --cov --cov-report=term-missing`
 
-A saved coverage report for Week 2 is available at `docs/coverage_week2.txt`
+```bash
+py -m poetry run pytest --cov --cov-report=term-missing
+```
+
+A saved coverage report for Week 2 is available at:
+
+- `docs/coverage_week2.txt`
 
 
+## Testing Status (Week 3)
+
+Automated unit testing is used to verify the correctness of the core compression algorithms.
+Testing focuses on lossless behavior, meaning that decompression must exactly reproduce the
+original input.
+
+### What is tested?
+
+- Huffman coding:
+  - Encoding and decoding correctness
+  - End-to-end roundtrip tests
+- LZ78:
+  - Encoding and decoding using dictionary-based compression
+  - Roundtrip tests with simple and representative text inputs
+
+### Types of inputs used
+
+- Empty strings
+- Short deterministic strings
+- Repeated-pattern text
+- Natural language sentences
+
+### How to run tests
+
+```bash
+py -m poetry run pytest
+```
+
+### Coverage tracking
+
+Test coverage is measured using pytest-cov:
+
+- `py -m poetry run pytest --cov --cov-report=term-missing`
+
+A snapshot of the Week 3 coverage report is saved in:
+
+- `docs/coverage_week3.txt`
+
+Coverage is used to identify untested parts of the core logic rather than to maximize percentage.
 

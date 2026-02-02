@@ -1,0 +1,17 @@
+..........                                                               [100%]
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.13.2-final-0 _______________
+
+Name                                  Stmts   Miss Branch BrPart  Cover   Missing
+---------------------------------------------------------------------------------
+src\compression\__init__.py               2      0      0      0   100%
+src\compression\huffman\__init__.py       2      0      0      0   100%
+src\compression\huffman\codec.py         68      0     26      1    99%   62->64
+src\compression\lz78\__init__.py          2      0      0      0   100%
+src\compression\lz78\codec.py            38      4     16      4    85%   40, 44, 46, 49
+src\compression\main.py                  43     19     10      3    51%   22-26, 40-44, 53-54, 58-59, 63-70
+---------------------------------------------------------------------------------
+TOTAL                                   155     23     52      8    83%
+
+2 empty files skipped.
+10 passed in 0.14s
