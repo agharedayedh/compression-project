@@ -21,11 +21,10 @@ prefix codes to characters based on their frequencies in the input. Characters t
 more frequently are represented with shorter codes, resulting in efficient compression
 for text with skewed frequency distributions.
 
-### LZ77 (Lempel–Ziv 1977)
-LZ77 is a dictionary-based compression algorithm that replaces repeated substrings with
-references to previous occurrences in the input stream. It forms the foundation of many
-widely used compression formats and is particularly effective for data with recurring
-patterns.
+### LZ78 (Lempel–Ziv 1978)
+LZ78 is a dictionary-based compression algorithm that builds a dictionary of previously seen
+phrases while reading the input. It outputs references to dictionary entries together with new
+symbols, allowing repeated patterns to be represented compactly.
 
 The project allows comparing these two fundamentally different approaches to lossless
 compression in terms of compression ratio, behavior, and algorithmic structure. Both algorithms are implemented from scratch without relying on external compression libraries.
