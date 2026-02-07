@@ -1,110 +1,144 @@
 # Testing Document
 
-## Week 2 Testing Status
+## Overview
 
-Testing has been started alongside the development of the project’s core functionality.  
-At this stage, the focus is on verifying the correctness of the Huffman coding implementation using unit tests and a simple end-to-end roundtrip test.
+Testing is an essential part of this project to ensure the correctness and reliability of
+lossless compression and decompression. The main testing goal is to verify that all
+implemented algorithms are **lossless**, meaning that decompression always reproduces
+the original input exactly.
 
-The testing effort will be expanded in later weeks as more functionality (such as LZ77 compression and file-based processing) is implemented.
+Automated unit tests and end-to-end tests are implemented using `pytest`. Test coverage
+is measured with `pytest-cov` and used to identify untested parts of the core logic.
 
----
 
-### Huffman Coding – Unit Tests
+## What Was Tested and How?
+
+### Huffman Coding
+
+Huffman coding was tested using unit tests that verify both individual components and
+the full compression–decompression pipeline.
+
+The following aspects were tested:
+
 - **Frequency-based encoding correctness**  
-  Small deterministic input strings (e.g. `"aaabcc"`) are encoded using Huffman coding.
-- **Roundtrip correctness**  
-  The encoded output is decoded and verified to match the original input exactly.
-- **Tree construction behavior**  
-  Tests ensure that valid Huffman trees can be built from character frequency tables without runtime errors.
+  Small deterministic strings (e.g. `"aaabcc"`) are encoded and checked to ensure that
+  symbol frequencies are processed correctly.
 
-These tests are implemented as unit tests using `pytest` and are located in:
+- **Tree construction**  
+  Tests verify that a valid Huffman tree can be built from frequency tables without
+  runtime errors.
 
+- **Encoding and decoding correctness**  
+  Encoded bit sequences are decoded and compared against the original input.
+
+- **End-to-end roundtrip testing**  
+  Text is compressed and then decompressed, and the result is verified to match the
+  original input exactly.
+
+Relevant test files:
 - `tests/test_huffman.py`
-
----
-
-### End-to-End Pipeline Test
-- A simple pipeline test verifies that a short input string can be:
-  1. Compressed using the Huffman encoder
-  2. Decompressed back to text
-  3. Compared against the original input
-
-This ensures that the core compression–decompression workflow functions correctly at a basic level.
-
-The end-to-end test is located in:
-
 - `tests/test_end_to_end.py`
 
----
 
-## Test Inputs Used
+### LZ78
 
-The current tests use:
-- Short, deterministic strings (e.g. `"aaabcc"`, `"This is a test."`)
-- Inputs chosen to be small and predictable, making it easier to verify correctness manually
+LZ78 testing focuses on dictionary-based compression behavior and correctness.
 
-Larger files and randomized inputs will be introduced in later testing phases.
+The following aspects were tested:
 
----
+- **Encoding and decoding correctness**  
+  Input strings are encoded into (index, character) pairs and decoded back to text.
 
-## How to Run the Tests
+- **Dictionary growth behavior**  
+  Tests verify that the dictionary is built incrementally and used consistently during
+  encoding and decoding.
 
-All tests can be executed in bash using:
+- **Roundtrip correctness**  
+  Compression followed by decompression always reproduces the original input.
 
+Relevant test file:
+- `tests/test_lz78.py`
+
+
+## Types of Inputs Used for Testing
+
+The following types of inputs were used to ensure representative coverage:
+
+- Empty strings
+- Very short deterministic strings
+- Repeated-pattern text (e.g. `"abababab"`)
+- Natural language sentences
+- Inputs with varying repetition and symbol distributions
+
+These inputs were chosen to make correctness easy to verify while still exercising the
+core algorithmic behavior.
+
+
+## End-to-End Testing
+
+End-to-end tests verify that the full compression pipeline works correctly from input
+text to compressed data and back.
+
+Example test procedure:
+1. Compress a text string using the selected algorithm
+2. Decompress the produced output
+3. Verify that the decompressed text matches the original input exactly
+
+This ensures that the main functionality of the program is observable and correct.
+
+
+## How Can the Tests Be Reproduced?
+
+All tests can be executed using Poetry and pytest.
+
+Run all tests:
 ```bash
 py -m poetry run pytest
 ```
 
-## Test Coverage
-
-Test coverage is tracked using pytest-cov. To run tests with coverage reporting:
+Run tests with coverage reporting:
 
 ```bash
 py -m poetry run pytest --cov --cov-report=term-missing
 ```
 
-A saved coverage report for Week 2 is available at:
+These commands reproduce all test results described in this document.
 
-- `docs/coverage_week2.txt`
+## Unit Test Coverage Report
 
+Test coverage is tracked using pytest-cov. Coverage reports are generated to identify
+unexecuted code paths and guide further testing.
 
-## Testing Status (Week 3)
+Saved coverage snapshots:
 
-Automated unit testing is used to verify the correctness of the core compression algorithms.
-Testing focuses on lossless behavior, meaning that decompression must exactly reproduce the
-original input.
+Week 2: `docs/coverage_week2.txt`
 
-### What is tested?
+Week 3: `docs/coverage_week3.txt`
 
-- Huffman coding:
-  - Encoding and decoding correctness
-  - End-to-end roundtrip tests
-- LZ78:
-  - Encoding and decoding using dictionary-based compression
-  - Roundtrip tests with simple and representative text inputs
+Week 4: `docs/coverage_week4.txt`
 
-### Types of inputs used
+Coverage is used as a diagnostic tool, not as a goal in itself. The emphasis is on
+testing correctness-critical parts of the algorithms rather than achieving 100% coverage.
 
-- Empty strings
-- Short deterministic strings
-- Repeated-pattern text
-- Natural language sentences
+## Empirical Testing Results
 
-### How to run tests
+At the current stage, empirical performance testing (such as compression ratio or runtime
+benchmarks on large files) is limited. The focus has been on algorithmic correctness and
+lossless behavior.
 
-```bash
-py -m poetry run pytest
-```
+Future work may include:
 
-### Coverage tracking
+- Compressing and decompressing larger text files
+- Comparing compression ratios between Huffman coding and LZ78
+- Visualizing performance results graphically
+- Testing Summary (Week 4 Status)
 
-Test coverage is measured using pytest-cov:
+By Week 4:
 
-- `py -m poetry run pytest --cov --cov-report=term-missing`
+Core compression functionality is fully testable
 
-A snapshot of the Week 3 coverage report is saved in:
+Both Huffman coding and LZ78 are covered by unit and roundtrip tests
 
-- `docs/coverage_week3.txt`
+End-to-end testing is in place
 
-Coverage is used to identify untested parts of the core logic rather than to maximize percentage.
-
+Test coverage reporting is included and documented
