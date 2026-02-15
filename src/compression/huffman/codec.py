@@ -78,7 +78,6 @@ def encode(text: str) -> tuple[Dict[str, int], str]:
 
 
 def decode(freq: Dict[str, int], bits: str) -> str:
-
     root = build_huffman_tree(freq)
     if root is None:
         return ""
@@ -89,11 +88,18 @@ def decode(freq: Dict[str, int], bits: str) -> str:
     for b in bits:
         if b == "0":
             node = node.left if node.left is not None else node
-        else:
+        elif b == "1":
             node = node.right if node.right is not None else node
+        else:
+            raise ValueError(
+                "Invalid Huffman bitstring: contains characters other than '0' and '1'")
 
         if node.char is not None:
             out.append(node.char)
             node = root
+
+    if node is not root:
+        raise ValueError(
+            "Invalid Huffman bitstring: ended unexpectedly (incomplete code)")
 
     return "".join(out)

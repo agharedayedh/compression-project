@@ -1,0 +1,9 @@
+Lossless compression is useful when we need to store or transmit text without changing it.
+For example, legal documents, logs, and source code must remain identical after decoding.
+
+Natural language contains patterns such as repeated words, common letters, and recurring phrases.
+Huffman coding uses character frequencies to assign short codes to frequent symbols.
+LZ78 builds a dictionary of phrases that have appeared earlier in the text.
+
+This sample text is intentionally written as normal prose and includes punctuation, spaces, and line breaks.
+The goal is to represent realistic input instead of short artificial strings.

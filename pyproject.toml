@@ -36,3 +36,4 @@ source = ["compression"]
 [tool.coverage.report]
 show_missing = true
 skip_empty = true
+authors = ["Agharid Ayedh"]

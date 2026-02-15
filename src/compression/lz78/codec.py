@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-
-Token = List[object]
+Token = list[int | str]
 
 
 def encode(text: str) -> List[Token]:
@@ -32,7 +31,6 @@ def encode(text: str) -> List[Token]:
 def decode(tokens: List[Token]) -> str:
     dictionary: dict[int, str] = {0: ""}
     next_index = 1
-
     parts: list[str] = []
 
     for t in tokens:
@@ -49,7 +47,13 @@ def decode(tokens: List[Token]) -> str:
             raise ValueError(
                 f"Invalid token index {idx_raw}: not in dictionary.")
 
-        phrase = dictionary[idx_raw] + ch_raw
+        base = dictionary[idx_raw]
+
+        if ch_raw == "":
+            parts.append(base)
+            continue
+
+        phrase = base + ch_raw
         parts.append(phrase)
 
         dictionary[next_index] = phrase
