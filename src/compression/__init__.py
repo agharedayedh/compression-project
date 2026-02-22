@@ -1,4 +1,13 @@
-from .main import compress_file, decompress_file, compress_text, decompress_bytes
+from .storage import (
+    compress_bytes,
+    decompress_bytes,
+    compress_file,
+    decompress_file,
+)
 
-__all__ = ["compress_file", "decompress_file",
-           "compress_text", "decompress_bytes"]
+__all__ = [
+    "compress_bytes",
+    "decompress_bytes",
+    "compress_file",
+    "decompress_file",
+]

@@ -4,13 +4,21 @@ from pathlib import Path
 
 import pytest
 
-from compression.main import compress_file, decompress_file
+from compression.storage import compress_file, decompress_file
 
 
 @pytest.mark.parametrize("algorithm", ["huffman", "lz78"])
 def test_realistic_text_file_roundtrip(tmp_path: Path, algorithm: str) -> None:
-    # Read realistic natural-language input from a real file in data/.
+    """
+    Integration-style test using a real natural-language text file.
+
+    This supports the course requirement of representative inputs.
+    """
     source_path = Path(__file__).parent / "data" / "realistic_text.txt"
+    if not source_path.exists():
+        pytest.skip(
+            "Missing tests/data/realistic_text.txt (realistic input file not found).")
+
     original = source_path.read_text(encoding="utf-8")
 
     in_path = tmp_path / "input.txt"
@@ -19,7 +27,6 @@ def test_realistic_text_file_roundtrip(tmp_path: Path, algorithm: str) -> None:
 
     in_path.write_text(original, encoding="utf-8")
 
-    # type: ignore[arg-type]
     compress_file(in_path, compressed_path, algorithm=algorithm)
     decompress_file(compressed_path, restored_path)
 

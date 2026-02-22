@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from compression.main import compress_file, decompress_file
+from compression.storage import compress_file, decompress_file
 
 
 @pytest.mark.parametrize("algorithm", ["huffman", "lz78"])
@@ -16,7 +16,6 @@ def test_file_roundtrip_small(tmp_path: Path, algorithm: str) -> None:
 
     in_path.write_text(original, encoding="utf-8")
 
-    # type: ignore[arg-type]
     compress_file(in_path, compressed_path, algorithm=algorithm)
     assert compressed_path.exists()
     assert compressed_path.stat().st_size > 0
@@ -30,21 +29,19 @@ def test_file_roundtrip_small(tmp_path: Path, algorithm: str) -> None:
 
 @pytest.mark.parametrize("algorithm", ["huffman", "lz78"])
 def test_file_roundtrip_realistic_text(tmp_path: Path, algorithm: str) -> None:
-    # A more "realistic" natural-language sized input (not huge, but clearly non-trivial).
     paragraph = (
         "Lossless compression means we can recover the exact original text after decoding. "
         "This matters when storing documents, logs, and data that must not change. "
         "In practice, texts contain repetition and skewed character frequencies, "
         "so algorithms like Huffman coding and LZ78 can reduce size while preserving content.\n"
     )
-    original = paragraph * 200  # scale up to make it realistically larger
+    original = paragraph * 200  # realistic, non-trivial size
 
     in_path = tmp_path / "input.txt"
     compressed_path = tmp_path / "compressed.bin"
     out_path = tmp_path / "restored.txt"
 
     in_path.write_text(original, encoding="utf-8")
-    # type: ignore[arg-type]
     compress_file(in_path, compressed_path, algorithm=algorithm)
     decompress_file(compressed_path, out_path)
 
@@ -54,7 +51,7 @@ def test_file_roundtrip_realistic_text(tmp_path: Path, algorithm: str) -> None:
 
 def test_compression_can_reduce_size_on_repetitive_text(tmp_path: Path) -> None:
     # Compression is not guaranteed to be smaller for every input.
-    # This test uses highly repetitive input where compression should typically help.
+    # This uses highly repetitive input where compression should help.
     original = ("abcabcabcabcabcabcabcabcabc\n" * 2000)
 
     in_path = tmp_path / "input.txt"
@@ -67,7 +64,6 @@ def test_compression_can_reduce_size_on_repetitive_text(tmp_path: Path) -> None:
     compress_file(in_path, compressed_path_h, algorithm="huffman")
     compress_file(in_path, compressed_path_lz, algorithm="lz78")
 
-    # At least one of the algorithms should compress this repetitive input noticeably.
     assert (
         compressed_path_h.stat().st_size < original_size
         or compressed_path_lz.stat().st_size < original_size

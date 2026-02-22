@@ -1,77 +1,105 @@
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
-from typing import Literal
 
-from .huffman.codec import decode as huff_decode
-from .huffman.codec import encode as huff_encode
-from .lz78.codec import decode as lz78_decode
-from .lz78.codec import encode as lz78_encode
-from .storage import (
-    StorageError,
-    detect_algorithm,
-    pack_huffman,
-    pack_lz78,
-    unpack_huffman,
-    unpack_lz78,
-)
-
-Algorithm = Literal["huffman", "lz78"]
+from .storage import Algorithm, compress_file, decompress_file
 
 
-def compress_text(text: str, algorithm: Algorithm = "huffman") -> bytes:
+def _build_parser() -> argparse.ArgumentParser:
+    """Build the command-line interface (CLI) parser."""
+    parser = argparse.ArgumentParser(
+        prog="compression",
+        description="Lossless text compression using Huffman coding and LZ78.",
+    )
+
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_compress = sub.add_parser(
+        "compress", help="Compress a UTF-8 text file into a binary file.")
+    p_compress.add_argument(
+        "algorithm",
+        choices=["huffman", "lz78"],
+        help="Compression algorithm to use.",
+    )
+    p_compress.add_argument(
+        "input", type=Path, help="Path to input UTF-8 text file.")
+    p_compress.add_argument("output", type=Path,
+                            help="Path to output binary file (.bin).")
+
+    p_decompress = sub.add_parser(
+        "decompress", help="Decompress a binary file into a UTF-8 text file.")
+    p_decompress.add_argument(
+        "input", type=Path, help="Path to input binary file (.bin).")
+    p_decompress.add_argument(
+        "output", type=Path, help="Path to output UTF-8 text file.")
+
+    return parser
+
+
+def _ensure_parent_dir_exists(path: Path) -> None:
+    """Create parent directory for output file if it does not exist."""
+    if path.parent and not path.parent.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+
+def main(argv: list[str] | None = None) -> int:
     """
-    Compress text and return bytes in a binary container format.
-    The output remains compressed on disk and can be decompressed later.
+    Entry point for the CLI.
+
+    Returns:
+        Exit code (0 = success, non-zero = error).
     """
-    if algorithm == "huffman":
-        freq, bits = huff_encode(text)
-        return pack_huffman(freq, bits)
+    parser = _build_parser()
+    args = parser.parse_args(argv)
 
-    if algorithm == "lz78":
-        tokens = lz78_encode(text)
-        return pack_lz78(tokens)
-
-    raise ValueError(f"Unknown algorithm: {algorithm}")
-
-
-def decompress_bytes(data: bytes) -> str:
-    """
-    Decompress bytes produced by compress_text().
-    Raises ValueError if data is invalid or unsupported.
-    """
     try:
-        alg = detect_algorithm(data)
-        if alg == "huffman":
-            freq, bits = unpack_huffman(data)
-            return huff_decode(freq, bits)
-        if alg == "lz78":
-            tokens = unpack_lz78(data)
-            return lz78_decode(tokens)
-        raise ValueError("Unknown algorithm in compressed data.")
-    except StorageError as exc:
-        raise ValueError(str(exc)) from exc
+        if args.command == "compress":
+            input_path: Path = args.input
+            output_path: Path = args.output
+            algorithm: Algorithm = args.algorithm
 
+            if not input_path.exists():
+                raise FileNotFoundError(f"Input file not found: {input_path}")
 
-def compress_file(
-    input_path: str | Path,
-    output_path: str | Path,
-    algorithm: Algorithm = "huffman",
-) -> None:
-    text = Path(input_path).read_text(encoding="utf-8")
-    Path(output_path).write_bytes(compress_text(text, algorithm=algorithm))
+            _ensure_parent_dir_exists(output_path)
 
+            compress_file(input_path, output_path, algorithm=algorithm)
 
-def decompress_file(input_path: str | Path, output_path: str | Path) -> None:
-    data = Path(input_path).read_bytes()
-    Path(output_path).write_text(decompress_bytes(data), encoding="utf-8")
+            in_size = input_path.stat().st_size
+            out_size = output_path.stat().st_size
+            ratio = out_size / in_size if in_size else 0.0
+
+            print(
+                f"Compressed using {algorithm}: {input_path} -> {output_path}")
+            print(
+                f"Original: {in_size} bytes, Compressed: {out_size} bytes, Ratio: {ratio:.3f}")
+            return 0
+
+        if args.command == "decompress":
+            input_path: Path = args.input
+            output_path: Path = args.output
+
+            if not input_path.exists():
+                raise FileNotFoundError(f"Input file not found: {input_path}")
+
+            _ensure_parent_dir_exists(output_path)
+
+            decompress_file(input_path, output_path)
+
+            out_size = output_path.stat().st_size
+            print(
+                f"Decompressed: {input_path} -> {output_path} ({out_size} bytes)")
+            return 0
+
+        parser.error("Unknown command")
+        return 2
+
+    except Exception as e:
+        # Friendly CLI error message; stack traces are not helpful for end users.
+        print(f"Error: {e}")
+        return 1
 
 
 if __name__ == "__main__":
-    sample = "hello hello hello"
-    for algo in ("huffman", "lz78"):
-        # type: ignore[arg-type]
-        packed = compress_text(sample, algorithm=algo)
-        restored = decompress_bytes(packed)
-        print(f"{algo.upper()} OK" if restored ==
-              sample else f"{algo.upper()} FAIL")
+    raise SystemExit(main())

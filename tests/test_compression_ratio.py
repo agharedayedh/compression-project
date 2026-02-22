@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from compression.main import compress_file
+from compression.storage import compress_file
 
 
 def _write_text(path: Path, text: str) -> None:
@@ -16,7 +16,6 @@ def _compress_and_sizes(tmp_path: Path, text: str, algorithm: str) -> tuple[int,
     out_path = tmp_path / "compressed.bin"
 
     _write_text(in_path, text)
-    # type: ignore[arg-type]
     compress_file(in_path, out_path, algorithm=algorithm)
 
     original_size = in_path.stat().st_size
@@ -27,7 +26,7 @@ def _compress_and_sizes(tmp_path: Path, text: str, algorithm: str) -> tuple[int,
 @pytest.mark.parametrize("algorithm", ["huffman", "lz78"])
 def test_compression_smaller_for_highly_repetitive_input(tmp_path: Path, algorithm: str) -> None:
     # Highly repetitive input should compress smaller with both algorithms.
-    # Use a large size so container/header overhead cannot dominate.
+    # Use large enough size so header overhead cannot dominate.
     text = "a" * 200_000
 
     original_size, compressed_size = _compress_and_sizes(
@@ -40,16 +39,14 @@ def test_compression_smaller_for_highly_repetitive_input(tmp_path: Path, algorit
 
 
 def test_huffman_compression_usually_smaller_for_large_natural_language(tmp_path: Path) -> None:
-    # Natural-language style input (multi-sentence) repeated to a realistic size.
-    # For Huffman, we expect the compressed output to be smaller in typical cases,
-    # especially when input is large enough.
+    # Large natural-language input (multi-sentence repeated) where Huffman should typically help.
     paragraph = (
         "Lossless compression is useful when the exact original text must be recovered. "
         "Natural language contains patterns such as repeated words, spaces, and punctuation, "
         "which makes it compressible in many practical cases. "
         "This test uses a realistic paragraph repeated many times to produce a large input.\n"
     )
-    text = paragraph * 3000  # large enough that size behavior is meaningful
+    text = paragraph * 3000
 
     original_size, compressed_size = _compress_and_sizes(
         tmp_path, text, "huffman")

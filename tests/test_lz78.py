@@ -1,4 +1,5 @@
 from compression.lz78.codec import decode, encode
+import pytest
 
 
 def test_lz78_roundtrip_simple():
@@ -23,7 +24,7 @@ def test_lz78_roundtrip_with_spaces_and_punctuation():
 
 
 def test_lz78_roundtrip_unicode():
-    text = "Ågharid 😊😊 hello مرحبا"
+    text = "Agharid 😊😊 hello مرحبا"
     tokens = encode(text)
     restored = decode(tokens)
     assert restored == text
@@ -39,3 +40,29 @@ def test_lz78_tokens_are_json_friendly():
         assert len(tok) == 2
         assert isinstance(tok[0], int)
         assert isinstance(tok[1], str)
+
+
+def test_lz78_decode_rejects_non_list_token():
+    with pytest.raises(ValueError):
+        decode([("not", "a list")])  # type: ignore[arg-type]
+
+
+def test_lz78_decode_rejects_wrong_token_length():
+    with pytest.raises(ValueError):
+        decode([[0, "a", "extra"]])  # type: ignore[list-item]
+
+
+def test_lz78_decode_rejects_non_int_index():
+    with pytest.raises(ValueError):
+        decode([["0", "a"]])  # type: ignore[list-item]
+
+
+def test_lz78_decode_rejects_non_str_char():
+    with pytest.raises(ValueError):
+        decode([[0, 5]])  # type: ignore[list-item]
+
+
+def test_lz78_decode_rejects_invalid_dictionary_reference():
+    # Index 999 doesn't exist at the start (dictionary initially has only 0 -> "")
+    with pytest.raises(ValueError):
+        decode([[999, "a"]])

@@ -1,8 +1,9 @@
 [tool.poetry]
 name = "compression-project"
 version = "0.1.0"
-description = "Lossless text compression using Huffman coding and LZ77"
+description = "Lossless text compression using Huffman coding and LZ78"
 readme = "README.md"
+authors = ["Agharid Ayedh"]
 packages = [{ include = "compression", from = "src" }]
 
 [tool.poetry.dependencies]
@@ -12,11 +13,15 @@ python = ">=3.11,<4.0"
 pytest = "^9.0.0"
 pytest-cov = "^7.0.0"
 ruff = "^0.14.0"
+coverage = "^7.0.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+# -----------------------------
+# Ruff configuration
+# -----------------------------
 [tool.ruff]
 line-length = 100
 target-version = "py311"
@@ -25,15 +30,26 @@ target-version = "py311"
 select = ["E", "F", "I", "B", "UP"]
 ignore = ["E501"]
 
+# -----------------------------
+# Pytest configuration
+# -----------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
 
+# -----------------------------
+# Coverage configuration
+# -----------------------------
 [tool.coverage.run]
 branch = true
-source = ["compression"]
+source = ["src/compression"]
+omit = [
+  "src/compression/main.py",
+]
 
 [tool.coverage.report]
 show_missing = true
 skip_empty = true
-authors = ["Agharid Ayedh"]
+omit = [
+    "*/__init__.py",
+]
