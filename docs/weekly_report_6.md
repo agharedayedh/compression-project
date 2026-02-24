@@ -2,7 +2,7 @@ Weekly Report 6
 
 ## Time spent  
 
-Approximately 18 hours.
+Approximately 25 hours.
 
 
 ## What did I do this week?

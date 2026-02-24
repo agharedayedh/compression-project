@@ -2,81 +2,289 @@
 
 ## Program Structure
 
-The project is implemented as a modular Python package located under the `src/compression`
-directory. Each compression algorithm is placed in its own submodule to keep the code
-organized and easy to extend.
+The project is implemented as a modular Python package located under:
 
-The Huffman coding implementation contains functionality for frequency analysis, tree
-construction, encoding, and decoding. The LZ78 implementation focuses on dictionary-based
-compression, where repeated substrings are replaced with references to a dynamically
-constructed dictionary.
+```
+src/compression
+```
 
-The file `compression/main.py` serves as the main interface of the program. It connects the
-compression algorithms and provides functions for compressing and decompressing text data
-and files. This separation allows the algorithms to be tested independently while still
-supporting end-to-end execution.
+The structure follows a clear separation of concerns between algorithms, storage handling, and user interface.
 
-## Achieved Time and Space Complexities
+### Main Components
 
-### Huffman Coding
+#### `compression/huffman/codec.py`
 
-Huffman coding has a time complexity of \(O(n \log n)\), where \(n\) is the number of unique
-symbols in the input. This complexity mainly comes from building the Huffman tree using a
-priority queue. Encoding and decoding the text run in linear time relative to the input size.
+Implements **Huffman coding**:
 
-The space complexity is \(O(n)\), as the algorithm needs to store the frequency table,
-Huffman tree, and encoded bit representation.
+- Frequency table construction  
+- Huffman tree construction using a priority queue  
+- Code table generation  
+- Encoding and decoding functions  
+
+---
+
+#### `compression/lz78/codec.py`
+
+Implements the **LZ78 dictionary-based compression algorithm**:
+
+- Incremental dictionary construction  
+- Token-based encoding  
+- Dictionary-driven decoding  
+
+---
+
+#### `compression/storage.py`
+
+Responsible for **binary serialization and deserialization**:
+
+- Defines a custom binary container format  
+- Stores algorithm identifier and version  
+- Packs Huffman bitstrings into actual bytes  
+- Serializes LZ78 tokens into structured binary format  
+- Automatically detects algorithm during decompression  
+
+---
+
+#### `compression/main.py`
+
+Provides the **command-line interface**:
+
+- `compress` command  
+- `decompress` command  
+- File-based pipeline  
+- Compression ratio reporting  
+
+---
+
+### Modular Design Benefits
+
+- Independent testing of algorithms  
+- Clear separation between compression logic and binary storage  
+- Easy extensibility for additional algorithms in the future  
+
+---
+
+# Achieved Time and Space Complexities
+
+---
+
+## Huffman Coding
+
+Let:
+
+- \( n \) = number of unique symbols  
+- \( m \) = total length of input text  
+
+### Time Complexity
+
+1. **Frequency table construction**  
+   \( O(m) \)
+
+2. **Building the Huffman tree using a priority queue**  
+   \( O(n \log n) \)
+
+3. **Encoding the text**  
+   \( O(m) \)
+
+4. **Decoding the bitstring**  
+   \( O(m) \)
+
+### Overall Complexity
+
+\[
+O(m + n \log n)
+\]
+
+In typical text input, \( n \) (unique characters) is small compared to \( m \).
+
+---
+
+### Space Complexity
+
+- Frequency table: \( O(n) \)  
+- Huffman tree: \( O(n) \)  
+- Encoded bit representation: \( O(m) \)  
+
+### Overall
+
+\[
+O(m + n)
+\]
+
+---
+
+## LZ78
+
+Let:
+
+- \( m \) = length of input string  
+- \( k \) = number of dictionary entries  
+
+---
+
+### Time Complexity
+
+#### Encoding
+
+- Each character processed once  
+- Dictionary lookups are average \( O(1) \)
+
+\[
+O(m)
+\]
+
+#### Decoding
+
+- Each token processed once  
+- Dictionary reconstruction incremental  
+
+\[
+O(m)
+\]
+
+---
+
+### Space Complexity
+
+- Dictionary grows dynamically  
+- Worst case: one new entry per character  
+
+\[
+O(k) \le O(m)
+\]
+
+---
+
+# Performance and Big-O Comparison
+
+Huffman coding and LZ78 represent two fundamentally different approaches:
+
+| Algorithm | Type | Strength |
+|-----------|------|----------|
+| Huffman | Entropy-based | Performs well when character frequencies are skewed |
+| LZ78 | Dictionary-based | Performs well when repeated substrings exist |
+
+---
+
+## Asymptotic Comparison
+
+- **Huffman:** \( O(m + n \log n) \)  
+- **LZ78:** \( O(m) \)
+
+In practice, both are efficient for realistic file sizes.
+
+However, actual compression ratio depends strongly on input characteristics:
+
+- Alphabet size  
+- Repetition patterns  
+- Text structure  
+
+---
+
+# Empirical Compression Ratio Comparison 
+
+Empirical evaluation was performed using natural-language text.
+
+For each target size (1kB–16MB), the same base text was repeated to generate equal-sized inputs. Both algorithms were applied to the exact same files.
+
+| Input size | Original (B) | Huffman (B) | LZ78 (B) | Huffman ratio | LZ78 ratio |
+|------------|-------------|-------------|----------|----------------|------------|
+| 1kB | 1039 | 849 | 2823 | 0.817 | 2.717 |
+| 4kB | 4159 | 2618 | 8935 | 0.629 | 2.148 |
+| 16kB | 16639 | 9407 | 26805 | 0.565 | 1.611 |
+| 64kB | 66561 | 36546 | 74769 | 0.549 | 1.123 |
+| 256kB | 266245 | 145117 | 190514 | 0.545 | 0.716 |
+| 1MB | 1064978 | 579392 | 440534 | 0.544 | 0.414 |
+| 4MB | 4259917 | 2316497 | 950570 | 0.544 | 0.223 |
+| 16MB | 17039666 | 9264901 | 1973586 | 0.544 | 0.116 |
+
+---
+
+## Observations
+
+- Huffman stabilizes around **~0.54 compression ratio** for larger inputs.  
+- LZ78 performs poorly on small files due to dictionary overhead.  
+- LZ78 improves significantly as file size increases.  
+- For large repeated natural-language text, LZ78 achieves better ratios than Huffman.  
+
+Runtime benchmarking was not performed, Python is not optimized for performance benchmarking.
+
+---
+
+# Binary Storage Design
+
+Compressed data is stored in a **custom binary container format**.
+
+## Header
+
+- Magic bytes (`CPRJ`)  
+- Version number  
+- Algorithm identifier  
+
+---
+
+## Payload
+
+### Huffman
+
+- Symbol count  
+- UTF-8 encoded characters with frequencies  
+- Bit length  
+- Packed bitstream (true bit-level packing into bytes)  
 
 ### LZ78
 
-LZ78 encoding and decoding both run in \(O(m)\) time, where \(m\) is the length of the input
-string, assuming average constant-time dictionary operations. Each character is processed
-once, and dictionary lookups are performed incrementally.
+- Token count  
+- For each token:
+  - Index  
+  - UTF-8 character bytes  
 
-The space complexity is \(O(k)\), where \(k\) is the number of dictionary entries created
-during compression. In the worst case, this grows linearly with the input size.
+Huffman bitstrings are packed at the bit level into actual bytes, ensuring real binary storage instead of textual `"0"` / `"1"` strings.
 
-These complexity estimates are based on standard pseudocode descriptions and explanations
-from textbooks and online references, rather than empirical measurement.
+This guarantees that compressed files:
 
-## Performance and Complexity Comparison
+- Remain valid after program exit  
+- Contain no JSON or text-based structures  
+- Are independent of runtime memory structures  
 
-Huffman coding and LZ78 represent two fundamentally different approaches to compression.
-Huffman coding is entropy-based and performs well when character frequencies are highly
-skewed, while LZ78 is dictionary-based and performs better when the input contains repeated
-substrings.
+---
 
-In terms of asymptotic complexity, both algorithms are efficient for practical input sizes.
-However, their real-world performance depends strongly on input characteristics such as
-repetition and alphabet size. A more detailed empirical comparison may be added later in
-the project.
+# Possible Shortcomings and Improvements
 
-## Possible Shortcomings and Improvements
+While the implementation satisfies correctness, possible improvements include:
 
-At the current stage, compressed data is stored in a simple structured format rather than
-a fully optimized binary representation. This is sufficient for correctness and testing
-but not optimal in terms of storage efficiency.
+- More memory-efficient dictionary structures for LZ78  
+- Canonical Huffman codes for better determinism  
+- Stream-based compression (currently whole-file based)  
+- Runtime benchmarking for research purposes  
+- Adding additional compression algorithms for broader comparison  
 
-Other possible improvements include:
-- Optimizing dictionary handling in LZ78
-- Improving binary serialization of compressed data
-- Adding performance benchmarks for larger input files
-- Supporting algorithm selection via command-line arguments
+---
 
-These improvements are planned for later stages of the project.
+# Use of Large Language Models
 
-## Use of Large Language Models
+ChatGPT (GPT-4 class model) was used for:
 
-Large language models (ChatGPT) were used only to polish and improve the clarity of
-documentation text. They were not used to generate algorithm implementations or core
-logic. All algorithms and code structures were designed and implemented by the author.
+- Reviewing and refining documentation language  
+- Discussing test strategy improvements  
+- Clarifying theoretical complexity reasoning  
 
-## Sources
+Large language models were **not** used to generate final algorithm implementations.
 
-The following sources were used during the implementation:
+All compression logic, storage design, and testing structure were designed and implemented independently by the author.
 
-- Cormen et al., *Introduction to Algorithms*
-- Wikipedia: Huffman coding
-- Wikipedia: LZ78
-- *Handbook of Data Compression* by David Salomon
+---
+
+# Sources
+
+The following sources were used:
+
+- Cormen et al., *Introduction to Algorithms*  
+- Salomon, D., *Handbook of Data Compression*  
+- Wikipedia: Huffman coding  
+- Wikipedia: LZ78  
+- Python documentation  
 - Stack Overflow discussions related to Huffman tree storage
+
+Only sources directly relevant to the implementation and algorithm design are listed.
+
