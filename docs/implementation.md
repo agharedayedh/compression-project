@@ -185,17 +185,17 @@ For each target size, a prefix of the corpus was used. Both algorithms were appl
 
 ## Results Table
 
-Input   Original(B)   Huffman(B)      LZ78(B)   H ratio   L ratio
---------------------------------------------------------------------
-1kB            1030          817         2698     0.793     2.619
-4kB            4118         2646         8767     0.643     2.129
-16kB          16525         9618        29191     0.582     1.766
-64kB          66075        37490        99305     0.567     1.503
-256kB        265516       148780       349545     0.560     1.316
-1MB         1066911       586648      1198010     0.550     1.123
-4MB         4309826      2441763      4243675     0.567     0.985
-16MB       17182048      9916013     15173153     0.577     0.883
 
+| Input | Original (B) | Huffman (B) | LZ78 (B) | H ratio | L ratio |
+|------|-------------|-------------|----------|--------|--------|
+| 1kB  | 1030        | 817         | 2698     | 0.793  | 2.619  |
+| 4kB  | 4118        | 2646        | 8767     | 0.643  | 2.129  |
+| 16kB | 16525       | 9618        | 29191    | 0.582  | 1.766  |
+| 64kB | 66075       | 37490       | 99305    | 0.567  | 1.503  |
+| 256kB| 265516      | 148780      | 349545   | 0.560  | 1.316  |
+| 1MB  | 1066911     | 586648      | 1198010  | 0.550  | 1.123  |
+| 4MB  | 4309826     | 2441763     | 4243675  | 0.567  | 0.985  |
+| 16MB | 17182048    | 9916013     | 15173153 | 0.577  | 0.883  |
 ---
 
 ## Observations
@@ -288,4 +288,3 @@ All implementation decisions and code were created and verified independently.
 - Project Gutenberg: https://www.gutenberg.org/  
 - Wikipedia Articles: https://www.wikipedia.org/ 
 
-Only sources directly relevant to implementation are listed.
