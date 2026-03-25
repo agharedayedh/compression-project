@@ -1,66 +1,70 @@
 # Implementation Document
 
+---
+
 ## Program Structure
 
 The project is implemented as a modular Python package located under:
 
-```
+```text
 src/compression
 ```
 
-The structure follows a clear separation of concerns between algorithms, storage handling, and user interface.
+The structure separates compression algorithms, binary storage, and user interaction.
 
-### Main Components
+---
 
-#### `compression/huffman/codec.py`
+## Main Components
+
+### `compression/huffman/codec.py`
 
 Implements **Huffman coding**:
 
-- Frequency table construction  
+- frequency table construction  
 - Huffman tree construction using a priority queue  
-- Code table generation  
-- Encoding and decoding functions  
+- code table generation  
+- encoding and decoding functions  
 
 ---
 
-#### `compression/lz78/codec.py`
+### `compression/lz78/codec.py`
 
 Implements the **LZ78 dictionary-based compression algorithm**:
 
-- Incremental dictionary construction  
-- Token-based encoding  
-- Dictionary-driven decoding  
+- incremental dictionary construction  
+- token-based encoding  
+- dictionary-driven decoding  
 
 ---
 
-#### `compression/storage.py`
+### `compression/storage.py`
 
-Responsible for **binary serialization and deserialization**:
+Responsible for binary serialization and deserialization:
 
-- Defines a custom binary container format  
-- Stores algorithm identifier and version  
-- Packs Huffman bitstrings into actual bytes  
-- Serializes LZ78 tokens into structured binary format  
-- Automatically detects algorithm during decompression  
+- defines a custom binary container format  
+- stores algorithm identifier and version  
+- packs Huffman bitstrings into bytes  
+- serializes LZ78 tokens into binary form  
+- automatically detects algorithm during decompression  
 
 ---
 
-#### `compression/main.py`
+### `compression/main.py`
 
-Provides the **command-line interface**:
+Provides the command-line interface:
 
 - `compress` command  
 - `decompress` command  
-- File-based pipeline  
-- Compression ratio reporting  
+- file-based pipeline  
+- compression ratio reporting  
 
 ---
 
-### Modular Design Benefits
+## Modular Design Benefits
 
-- Independent testing of algorithms  
-- Clear separation between compression logic and binary storage  
-- Easy extensibility for additional algorithms in the future  
+- independent testing of algorithms  
+- clear separation between compression logic and binary storage  
+- easy extensibility for additional algorithms in the future  
 
 ---
 
@@ -77,33 +81,26 @@ Let:
 
 ### Time Complexity
 
-1. **Frequency table construction**  
-   \( O(m) \)
+- Frequency table construction: \( O(m) \)  
+- Huffman tree construction: \( O(n \log n) \)  
+- Encoding: \( O(m) \)  
+- Decoding: \( O(m) \)  
 
-2. **Building the Huffman tree using a priority queue**  
-   \( O(n \log n) \)
-
-3. **Encoding the text**  
-   \( O(m) \)
-
-4. **Decoding the bitstring**  
-   \( O(m) \)
-
-### Overall Complexity
+### Overall
 
 \[
 O(m + n \log n)
 \]
 
-In typical text input, \( n \) (unique characters) is small compared to \( m \).
+In typical text input, \( n \) is small compared to \( m \).
 
 ---
 
 ### Space Complexity
 
-- Frequency table: \( O(n) \)  
+- frequency table: \( O(n) \)  
 - Huffman tree: \( O(n) \)  
-- Encoded bit representation: \( O(m) \)  
+- encoded bit representation: \( O(m) \)  
 
 ### Overall
 
@@ -120,14 +117,11 @@ Let:
 - \( m \) = length of input string  
 - \( k \) = number of dictionary entries  
 
----
-
 ### Time Complexity
 
 #### Encoding
 
-- Each character processed once  
-- Dictionary lookups are average \( O(1) \)
+Each character is processed once, and dictionary lookups are average \( O(1) \):
 
 \[
 O(m)
@@ -135,8 +129,7 @@ O(m)
 
 #### Decoding
 
-- Each token processed once  
-- Dictionary reconstruction incremental  
+Each token is processed once:
 
 \[
 O(m)
@@ -146,8 +139,7 @@ O(m)
 
 ### Space Complexity
 
-- Dictionary grows dynamically  
-- Worst case: one new entry per character  
+The dictionary grows dynamically. In the worst case:
 
 \[
 O(k) \le O(m)
@@ -160,7 +152,7 @@ O(k) \le O(m)
 Huffman coding and LZ78 represent two fundamentally different approaches:
 
 | Algorithm | Type | Strength |
-|-----------|------|----------|
+|----------|------|----------|
 | Huffman | Entropy-based | Performs well when character frequencies are skewed |
 | LZ78 | Dictionary-based | Performs well when repeated substrings exist |
 
@@ -168,58 +160,65 @@ Huffman coding and LZ78 represent two fundamentally different approaches:
 
 ## Asymptotic Comparison
 
-- **Huffman:** \( O(m + n \log n) \)  
-- **LZ78:** \( O(m) \)
+- Huffman: \( O(m + n \log n) \)  
+- LZ78: \( O(m) \)  
 
-In practice, both are efficient for realistic file sizes.
+In practice, both are efficient for typical file sizes.
 
-However, actual compression ratio depends strongly on input characteristics:
+However, compression ratio depends strongly on:
 
-- Alphabet size  
-- Repetition patterns  
-- Text structure  
+- character frequency distribution  
+- repetition patterns  
+- text structure  
 
 ---
 
-# Empirical Compression Ratio Comparison 
+# Empirical Compression Ratio Comparison
 
-Empirical evaluation was performed using natural-language text.
+Empirical evaluation was performed using natural-language text collected from multiple sources.
 
-For each target size (1kB–16MB), the same base text was repeated to generate equal-sized inputs. Both algorithms were applied to the exact same files.
+Instead of repeating the same text, a corpus was constructed by combining independent text files such as articles from Wikipedia and books from Project Gutenberg. This avoids artificial repetition and better represents realistic input.
 
-| Input size | Original (B) | Huffman (B) | LZ78 (B) | Huffman ratio | LZ78 ratio |
-|------------|-------------|-------------|----------|----------------|------------|
-| 1kB | 1039 | 849 | 2823 | 0.817 | 2.717 |
-| 4kB | 4159 | 2618 | 8935 | 0.629 | 2.148 |
-| 16kB | 16639 | 9407 | 26805 | 0.565 | 1.611 |
-| 64kB | 66561 | 36546 | 74769 | 0.549 | 1.123 |
-| 256kB | 266245 | 145117 | 190514 | 0.545 | 0.716 |
-| 1MB | 1064978 | 579392 | 440534 | 0.544 | 0.414 |
-| 4MB | 4259917 | 2316497 | 950570 | 0.544 | 0.223 |
-| 16MB | 17039666 | 9264901 | 1973586 | 0.544 | 0.116 |
+For each target size, a prefix of the corpus was used. Both algorithms were applied to the exact same inputs.
+
+---
+
+## Results Table
+
+Input   Original(B)   Huffman(B)      LZ78(B)   H ratio   L ratio
+--------------------------------------------------------------------
+1kB            1030          817         2698     0.793     2.619
+4kB            4118         2646         8767     0.643     2.129
+16kB          16525         9618        29191     0.582     1.766
+64kB          66075        37490        99305     0.567     1.503
+256kB        265516       148780       349545     0.560     1.316
+1MB         1066911       586648      1198010     0.550     1.123
+4MB         4309826      2441763      4243675     0.567     0.985
+16MB       17182048      9916013     15173153     0.577     0.883
 
 ---
 
 ## Observations
 
-- Huffman stabilizes around **~0.54 compression ratio** for larger inputs.  
-- LZ78 performs poorly on small files due to dictionary overhead.  
-- LZ78 improves significantly as file size increases.  
-- For large repeated natural-language text, LZ78 achieves better ratios than Huffman.  
-
-Runtime benchmarking was not performed, Python is not optimized for performance benchmarking.
+- Huffman coding consistently achieves stable compression ratios around 0.55–0.58 for larger inputs.
+- LZ78 performs poorly on small inputs due to dictionary overhead and fixed-size (32-bit) index storage.
+- As input size increases, LZ78 improves and eventually becomes effective for larger files.
+- For realistic natural-language input, LZ78 does not achieve extreme compression ratios, unlike when artificial repetition is used.
+- The results now reflect real-world behavior, where compression depends on actual structure and repetition in the data.
 
 ---
 
 # Binary Storage Design
 
-Compressed data is stored in a **custom binary container format**.
+Compressed data is stored in a custom binary container format.
+
+---
 
 ## Header
 
-- Magic bytes (`CPRJ`)  
-- Version number  
-- Algorithm identifier  
+- magic bytes (`CPRJ`)  
+- version number  
+- algorithm identifier  
 
 ---
 
@@ -227,64 +226,66 @@ Compressed data is stored in a **custom binary container format**.
 
 ### Huffman
 
-- Symbol count  
-- UTF-8 encoded characters with frequencies  
-- Bit length  
-- Packed bitstream (true bit-level packing into bytes)  
+- symbol count  
+- UTF-8 characters with frequencies  
+- bit length  
+- packed bitstream  
 
 ### LZ78
 
-- Token count  
-- For each token:
-  - Index  
+- token count  
+- for each token:
+  - index  
   - UTF-8 character bytes  
 
-Huffman bitstrings are packed at the bit level into actual bytes, ensuring real binary storage instead of textual `"0"` / `"1"` strings.
+---
 
-This guarantees that compressed files:
+Huffman bitstrings are packed at the bit level into actual bytes.
 
-- Remain valid after program exit  
-- Contain no JSON or text-based structures  
-- Are independent of runtime memory structures  
+This ensures:
+
+- true binary storage (no `"0"` / `"1"` strings)  
+- independence from runtime structures  
+- files remain valid after program exit  
 
 ---
 
 # Possible Shortcomings and Improvements
 
-While the implementation satisfies correctness, possible improvements include:
+Possible improvements include:
 
-- More memory-efficient dictionary structures for LZ78  
-- Canonical Huffman codes for better determinism  
-- Stream-based compression (currently whole-file based)  
-- Runtime benchmarking for research purposes  
-- Adding additional compression algorithms for broader comparison  
+- limiting dictionary size in LZ78  
+- Using variable-length or smaller index encoding in LZ78  
+- canonical Huffman codes  
+- stream-based compression  
+- additional compression algorithms  
+
+A key limitation:
+
+> The current LZ78 implementation does not limit dictionary size, which may lead to increased memory usage.
 
 ---
 
 # Use of Large Language Models
 
-ChatGPT (GPT-4 class model) was used for:
+ChatGPT was used for:
 
-- Reviewing and refining documentation language  
-- Discussing test strategy improvements  
-- Clarifying theoretical complexity reasoning  
+- improving documentation language  
+- discussing testing strategy  
+- verifying clarity of explanations  
 
-Large language models were **not** used to generate final algorithm implementations.
-
-All compression logic, storage design, and testing structure were designed and implemented independently by the author.
+All implementation decisions and code were created and verified independently.
 
 ---
 
 # Sources
 
-The following sources were used:
-
 - Cormen et al., *Introduction to Algorithms*  
 - Salomon, D., *Handbook of Data Compression*  
 - Wikipedia: Huffman coding  
 - Wikipedia: LZ78  
-- Python documentation  
-- Stack Overflow discussions related to Huffman tree storage
+- Python documentation
+- Project Gutenberg: https://www.gutenberg.org/  
+- Wikipedia Articles: https://www.wikipedia.org/ 
 
-Only sources directly relevant to the implementation and algorithm design are listed.
-
+Only sources directly relevant to implementation are listed.

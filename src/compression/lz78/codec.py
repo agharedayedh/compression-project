@@ -5,17 +5,26 @@ Token = list[int | str]
 
 def encode(text: str) -> list[Token]:
     """
-    LZ78-encode a string into a list of tokens.
+    This function compresses a string using the LZ78 algorithm.
 
-    Each token is a pair: [index, char]
-    - index: integer reference to a previous dictionary entry
-    - char: the next character to append (may be "" in the final token)
+    The algorithm builds a dictionary of patterns while reading the text.
+    Each output token is a pair:
+        [index, character]
+
+    - index: refers to a previous pattern in the dictionary
+    - character: the next new character to add
 
     Args:
-        text: Input text.
+        text (str): The input text that we want to compress.
 
     Returns:
-        List of tokens representing the compressed data.
+        list[Token]: A list of tokens representing the compressed data.
+
+    Notes:
+        - The dictionary starts with an empty string at index 0.
+        - New patterns are added as they are discovered.
+        - If the text ends with an already known pattern,
+          a final token is added with an empty string "".
     """
     dictionary: dict[str, int] = {"": 0}
     next_index = 1
@@ -24,16 +33,17 @@ def encode(text: str) -> list[Token]:
     out: list[Token] = []
 
     for ch in text:
-        wc = w + ch
-        if wc in dictionary:
-            w = wc
-        else:
-            out.append([dictionary[w], ch])
-            dictionary[wc] = next_index
-            next_index += 1
-            w = ""
+        wc = w + ch  # try to extend current pattern
 
-    # If we end with a phrase already in the dictionary, emit a final token.
+        if wc in dictionary:
+            w = wc  # pattern exists, keep building it
+        else:
+            out.append([dictionary[w], ch])  # output token
+            dictionary[wc] = next_index  # add new pattern
+            next_index += 1
+            w = ""  # reset pattern
+
+    # If we end with a known pattern, output a final token
     if w != "":
         out.append([dictionary[w], ""])
 
@@ -42,17 +52,30 @@ def encode(text: str) -> list[Token]:
 
 def decode(tokens: list[Token]) -> str:
     """
-    Decode LZ78 tokens back into the original string.
+    This function decompresses LZ78 tokens back into the original text.
+
+    It rebuilds the dictionary step by step using the tokens.
+    Each token contains:
+        [index, character]
+
+    - index: refers to a previous dictionary entry
+    - character: the next character to add
 
     Args:
-        tokens: Tokens produced by encode(), each token must be [int, str].
+        tokens (list[Token]): The compressed tokens from the encode() function.
 
     Returns:
-        The decoded (original) text.
+        str: The original uncompressed text.
 
     Raises:
-        ValueError: If the token format is invalid or the dictionary reference
-                    is impossible.
+        ValueError:
+            - If the token format is wrong
+            - If the index does not exist in the dictionary
+
+    Notes:
+        - The dictionary is rebuilt in the same order as encoding.
+        - If the character is "", it means no new character is added
+          (used for the final token).
     """
     dictionary: dict[int, str] = {0: ""}
     next_index = 1
@@ -76,7 +99,7 @@ def decode(tokens: list[Token]) -> str:
 
         base = dictionary[idx_raw]
 
-        # Final token may use empty string to indicate "no new character".
+        # If char is empty, just use the base pattern
         if ch_raw == "":
             parts.append(base)
             continue
@@ -84,7 +107,7 @@ def decode(tokens: list[Token]) -> str:
         phrase = base + ch_raw
         parts.append(phrase)
 
-        dictionary[next_index] = phrase
+        dictionary[next_index] = phrase  # add new pattern
         next_index += 1
 
     return "".join(parts)

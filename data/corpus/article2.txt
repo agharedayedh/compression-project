@@ -1,0 +1,58 @@
+Computer science is the study of computation, information, and automation. Included broadly in the sciences, computer science spans theoretical disciplines (such as algorithms, theory of computation, and information theory) to applied disciplines (including the design and implementation of hardware and software). An expert in the field is known as a computer scientist.
+
+Algorithms and data structures are central to computer science. The theory of computation concerns abstract models of computation and general classes of problems that can be solved using them. The fields of cryptography and computer security involve studying the means for secure communication and preventing security vulnerabilities. Computer graphics and computational geometry address the generation of images. Programming language theory considers different ways to describe computational processes, and database theory concerns the management of repositories of data. Human–computer interaction investigates the interfaces through which humans and computers interact, and software engineering focuses on the design and principles behind developing software. Areas such as operating systems, networks and embedded systems investigate the principles and design behind complex systems. Computer architecture describes the construction of computer components and computer-operated equipment. Artificial intelligence and machine learning aim to synthesize goal-oriented processes such as problem-solving, decision-making, environmental adaptation, planning and learning found in humans and animals. Within artificial intelligence, computer vision aims to understand and process image and video data, while natural language processing aims to understand and process textual and linguistic data.
+
+The fundamental concern of computer science is determining what can and cannot be automated. The Turing Award is generally recognized as the highest distinction in computer science.
+
+History
+
+Gottfried Wilhelm Leibniz (1646–1716) developed logic in a binary number system and has been called the founder of computer science. Charles Babbage is sometimes referred to as the father of computing. Ada Lovelace published the first algorithm intended for processing on a computer.
+
+The earliest foundations of what would become computer science predate the invention of the modern digital computer. Machines for calculating fixed numerical tasks such as the abacus have existed since antiquity, aiding in computations such as multiplication and division. Algorithms for performing computations have existed since antiquity, even before the development of sophisticated computing equipment.
+
+Wilhelm Schickard designed and constructed the first working mechanical calculator in 1623. In 1673, Gottfried Leibniz demonstrated a digital mechanical calculator called the Stepped Reckoner. In 1820, Thomas de Colmar launched the mechanical calculator industry when he invented the arithmometer. Charles Babbage designed the Difference Engine in 1822 and later the Analytical Engine, which introduced the concept of programmability using punched cards. In 1843, Ada Lovelace wrote an algorithm for computing Bernoulli numbers, considered the first published algorithm for a computer.
+
+Later developments included Herman Hollerith’s punched card tabulator, early electromechanical machines, and large-scale systems like the Harvard Mark I. In the 1940s, machines such as ENIAC marked the transition to modern computing. By the 1950s and 1960s, computer science became an academic discipline, with early programs established at institutions like the University of Cambridge and Purdue University.
+
+Etymology and scope
+
+The term "computer science" appeared in 1959. Despite its name, much of the field does not involve computers themselves but focuses on computation and information processing. Alternative terms such as computing science and datalogy have been proposed. In Europe, terms like informatics are commonly used.
+
+Computer science intersects with many disciplines including mathematics, physics, biology, linguistics, and philosophy. It shares a particularly strong relationship with mathematics, especially in areas like logic and formal methods. It also overlaps with software engineering, which focuses more on practical system design.
+
+Philosophy
+
+There is debate over whether computer science is a science, mathematics, or engineering discipline. Some argue it is empirical, others view it as engineering, and some consider it a mathematical field. Different paradigms describe computer science as involving theory, abstraction, and design.
+
+Fields
+
+Computer science includes a wide range of subfields:
+
+Theoretical computer science focuses on abstract models and computation limits, including computability and complexity theory. Information theory studies data representation and transmission. Algorithms and data structures analyze efficient computation methods. Programming language theory examines language design and formal methods for verification.
+
+Applied computer science includes computer graphics, image and sound processing, computational science, human–computer interaction, and software engineering.
+
+Artificial intelligence focuses on creating systems capable of learning, reasoning, and decision-making. It includes subfields such as machine learning, computer vision, and natural language processing.
+
+Computer systems areas include architecture, operating systems, networks, distributed systems, and security. Cryptography ensures secure communication, while databases manage large-scale data storage and retrieval.
+
+Discoveries
+
+Key insights in computer science include:
+
+All computable information can be represented using binary (0 and 1).
+Any computation can be expressed using a small set of basic operations.
+Complex programs can be built from simple control structures: sequence, selection, and repetition.
+
+Programming paradigms
+
+Common paradigms include:
+
+Functional programming, based on mathematical functions.
+Imperative programming, based on step-by-step instructions.
+Object-oriented programming, based on interacting objects.
+Service-oriented programming, based on reusable services.
+
+Research
+
+Computer science research is often shared through conferences, where rapid dissemination of results is prioritized. Conferences play a more central role in the field compared to journals.

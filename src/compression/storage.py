@@ -23,20 +23,50 @@ _ID_TO_ALG: dict[int, str] = {1: "huffman", 2: "lz78"}
 
 
 class StorageError(ValueError):
-    """Raised when compressed bytes are invalid or cannot be parsed."""
+    """
+    This error is raised when compressed binary data is invalid
+    or cannot be read correctly.
+    """
 
 
 def _pack_header(algorithm: Algorithm) -> bytes:
-    """Pack header: magic + version + algorithm id."""
+    """
+    This function creates the header for the compressed binary format.
+
+    The header stores:
+    - magic bytes to identify the file format
+    - version number
+    - algorithm id
+
+    Args:
+        algorithm (Algorithm): The compression algorithm used.
+
+    Returns:
+        bytes: The packed header as bytes.
+    """
     return _MAGIC + struct.pack(">BB", _VERSION, _ALG_TO_ID[algorithm])
 
 
 def _unpack_header(data: bytes) -> tuple[Algorithm, int]:
     """
-    Validate and parse the container header.
+    This function reads and checks the header of compressed data.
+
+    It makes sure that:
+    - the file is long enough
+    - the magic header is correct
+    - the version is supported
+    - the algorithm id is known
+
+    Args:
+        data (bytes): The compressed binary data.
 
     Returns:
-        (algorithm, payload_start_offset)
+        tuple[Algorithm, int]:
+            - the algorithm name
+            - the position where the actual payload starts
+
+    Raises:
+        StorageError: If the header is invalid.
     """
     if len(data) < 6:
         raise StorageError("Invalid data: too short for header.")
@@ -52,10 +82,22 @@ def _unpack_header(data: bytes) -> tuple[Algorithm, int]:
 
 def pack_bits(bitstring: str) -> tuple[int, bytes]:
     """
-    Pack a '0'/'1' bitstring into bytes.
+    This function packs a bit string made of '0' and '1' into bytes.
+
+    Because bytes store 8 bits each, this function groups the bits
+    into bytes and adds padding to the last byte if needed.
+
+    Args:
+        bitstring (str): A string containing only '0' and '1'.
 
     Returns:
-        (bit_length, packed_bytes)
+        tuple[int, bytes]:
+            - the original number of valid bits
+            - the packed bytes
+
+    Raises:
+        StorageError: If the bit string contains characters other than
+        '0' and '1'.
     """
     bit_len = len(bitstring)
     if bit_len == 0:
@@ -68,7 +110,7 @@ def pack_bits(bitstring: str) -> tuple[int, bytes]:
 
     out = bytearray()
     current = 0
-    filled = 0  # how many bits are in current byte
+    filled = 0  # how many bits are currently stored in this byte
 
     for b in bitstring:
         current = (current << 1) | (1 if b == "1" else 0)
@@ -79,7 +121,7 @@ def pack_bits(bitstring: str) -> tuple[int, bytes]:
             filled = 0
 
     if filled != 0:
-        current = current << (8 - filled)  # left-align remaining bits
+        current = current << (8 - filled)  # pad remaining bits on the right
         out.append(current)
 
     return bit_len, bytes(out)
@@ -87,14 +129,20 @@ def pack_bits(bitstring: str) -> tuple[int, bytes]:
 
 def unpack_bits(bit_len: int, data: bytes) -> str:
     """
-    Unpack bytes into a '0'/'1' bitstring using the stored bit length.
+    This function unpacks bytes back into a bit string of '0' and '1'.
+
+    The stored bit length is needed because the last byte may contain
+    extra padding bits that should not be included.
 
     Args:
-        bit_len: Number of valid bits in the packed data.
-        data: Packed bytes (may include padding bits).
+        bit_len (int): Number of valid bits in the data.
+        data (bytes): Packed bytes.
 
     Returns:
-        Bitstring of length bit_len.
+        str: The unpacked bit string.
+
+    Raises:
+        StorageError: If the bit length is invalid or there are not enough bytes.
     """
     if bit_len < 0:
         raise StorageError("Invalid bit length.")
@@ -121,20 +169,28 @@ def unpack_bits(bit_len: int, data: bytes) -> str:
 
 def pack_huffman(freq: dict[str, int], bits: str) -> bytes:
     """
-    Pack Huffman-compressed data into the project binary container format.
+    This function stores Huffman compressed data in the project binary format.
 
-    Format:
-        header
-        k (uint32)
-        repeated k times:
-            char_len (uint16) + char_bytes (UTF-8) + freq (uint32)
-        bit_len (uint32)
-        packed_bits (bytes)
+    The stored data includes:
+    - the file header
+    - the frequency table
+    - the bit length
+    - the packed bit data
+
+    Args:
+        freq (dict[str, int]): Frequency table of characters.
+        bits (str): Huffman encoded bit string.
+
+    Returns:
+        bytes: Huffman compressed data in binary container format.
+
+    Raises:
+        StorageError: If the frequency table or character data is invalid.
     """
     payload = bytearray()
     payload += _pack_header("huffman")
 
-    # Deterministic ordering improves reproducibility (useful for comparisons).
+    # Sort items to keep the output deterministic
     items = sorted(freq.items(), key=lambda x: x[0])
 
     payload += struct.pack(">I", len(items))
@@ -156,7 +212,24 @@ def pack_huffman(freq: dict[str, int], bits: str) -> bytes:
 
 
 def unpack_huffman(data: bytes) -> tuple[dict[str, int], str]:
-    """Unpack Huffman frequency table and bitstring from container bytes."""
+    """
+    This function reads Huffman compressed data from the binary container.
+
+    It extracts:
+    - the frequency table
+    - the encoded bit string
+
+    Args:
+        data (bytes): The compressed binary data.
+
+    Returns:
+        tuple[dict[str, int], str]:
+            - the frequency table
+            - the Huffman encoded bit string
+
+    Raises:
+        StorageError: If the data is incomplete or not valid Huffman data.
+    """
     alg, pos = _unpack_header(data)
     if alg != "huffman":
         raise StorageError("Data is not Huffman-compressed.")
@@ -196,14 +269,21 @@ def unpack_huffman(data: bytes) -> tuple[dict[str, int], str]:
 
 def pack_lz78(tokens: list[LZ78Token]) -> bytes:
     """
-    Pack LZ78 tokens into the project binary container format.
+    This function stores LZ78 tokens in the project binary format.
 
-    Format:
-        header
-        n_tokens (uint32)
-        repeated n times:
-            index (uint32)
-            char_len (uint16) + char_bytes (UTF-8)
+    The stored data includes:
+    - the file header
+    - number of tokens
+    - each token's index and character
+
+    Args:
+        tokens (list[LZ78Token]): List of LZ78 tokens.
+
+    Returns:
+        bytes: LZ78 compressed data in binary container format.
+
+    Raises:
+        StorageError: If a token is invalid or cannot be stored.
     """
     payload = bytearray()
     payload += _pack_header("lz78")
@@ -235,7 +315,20 @@ def pack_lz78(tokens: list[LZ78Token]) -> bytes:
 
 
 def unpack_lz78(data: bytes) -> list[LZ78Token]:
-    """Unpack LZ78 token list from container bytes."""
+    """
+    This function reads LZ78 compressed data from the binary container.
+
+    It extracts the list of tokens stored in the file.
+
+    Args:
+        data (bytes): The compressed binary data.
+
+    Returns:
+        list[LZ78Token]: The unpacked list of LZ78 tokens.
+
+    Raises:
+        StorageError: If the data is incomplete or not valid LZ78 data.
+    """
     alg, pos = _unpack_header(data)
     if alg != "lz78":
         raise StorageError("Data is not LZ78-compressed.")
@@ -270,21 +363,36 @@ def unpack_lz78(data: bytes) -> list[LZ78Token]:
 
 
 def detect_algorithm(data: bytes) -> Algorithm:
-    """Detect which algorithm was used for the given container bytes."""
+    """
+    This function checks which compression algorithm was used
+    in the binary container.
+
+    Args:
+        data (bytes): The compressed binary data.
+
+    Returns:
+        Algorithm: Either "huffman" or "lz78".
+    """
     alg, _ = _unpack_header(data)
     return alg
 
 
 def compress_bytes(text: str, algorithm: Algorithm = "huffman") -> bytes:
     """
-    Compress a string into container bytes (binary format).
+    This function compresses a text string into binary container bytes.
+
+    Depending on the selected algorithm, it uses either Huffman coding
+    or LZ78 and then stores the result in the project binary format.
 
     Args:
-        text: Input text.
-        algorithm: "huffman" or "lz78".
+        text (str): Input text to compress.
+        algorithm (Algorithm): Compression method to use.
 
     Returns:
-        Compressed bytes in the container format.
+        bytes: The compressed data in binary container format.
+
+    Raises:
+        ValueError: If the algorithm name is not supported.
     """
     if algorithm == "huffman":
         freq, bits = huff_encode(text)
@@ -299,7 +407,19 @@ def compress_bytes(text: str, algorithm: Algorithm = "huffman") -> bytes:
 
 def decompress_bytes(data: bytes) -> str:
     """
-    Decompress container bytes back into the original string.
+    This function decompresses binary container data back into text.
+
+    It first detects which algorithm was used and then calls
+    the correct decompression method.
+
+    Args:
+        data (bytes): The compressed binary data.
+
+    Returns:
+        str: The original decompressed text.
+
+    Raises:
+        StorageError: If the data format is invalid.
     """
     alg = detect_algorithm(data)
 
@@ -317,7 +437,15 @@ def decompress_bytes(data: bytes) -> str:
 
 def compress_file(input_path: str | Path, output_path: str | Path, algorithm: Algorithm = "huffman") -> None:
     """
-    Compress a UTF-8 text file into a binary compressed file.
+    This function compresses a UTF-8 text file into a binary file.
+
+    Args:
+        input_path (str | Path): Path to the input text file.
+        output_path (str | Path): Path where the compressed file will be saved.
+        algorithm (Algorithm): Compression algorithm to use.
+
+    Returns:
+        None
     """
     in_path = Path(input_path)
     out_path = Path(output_path)
@@ -328,7 +456,14 @@ def compress_file(input_path: str | Path, output_path: str | Path, algorithm: Al
 
 def decompress_file(input_path: str | Path, output_path: str | Path) -> None:
     """
-    Decompress a binary compressed file into a UTF-8 text file.
+    This function decompresses a binary compressed file back into a UTF-8 text file.
+
+    Args:
+        input_path (str | Path): Path to the compressed binary file.
+        output_path (str | Path): Path where the decompressed text file will be saved.
+
+    Returns:
+        None
     """
     in_path = Path(input_path)
     out_path = Path(output_path)

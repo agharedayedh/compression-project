@@ -1,0 +1,117 @@
+Software Engineering
+
+Software engineering is a branch of both computer science and engineering focused on designing, developing, testing, and maintaining software applications. It involves applying engineering principles and computer programming expertise to develop software systems that meet user needs.
+
+A software engineer applies a software development process that involves defining, implementing, testing, managing, and maintaining software systems, as well as developing the software development process itself.
+
+History
+
+Beginning in the 1960s, software engineering was recognized as a separate field of engineering.
+
+The development of software engineering was seen as a struggle. Problems included software that was over budget, exceeded deadlines, required extensive debugging and maintenance, and unsuccessfully met the needs of consumers or was never even completed.
+
+In 1968, NATO organized the first conference on software engineering, which addressed emerging challenges in software development. The event played a key role in formalizing guidelines and best practices for creating reliable and maintainable software.
+
+The origins of the term software engineering have been attributed to various sources. The term appeared in a list of services offered by companies in the June 1965 issue of "Computers and Automation" and was used more formally in the August 1966 issue of Communications of the ACM in "President's Letter to the ACM Membership" by Anthony A. Oettinger. It is also associated with the title of a NATO conference in 1968 by Professor Friedrich L. Bauer. Margaret Hamilton described the discipline of "software engineering" during the Apollo missions to give legitimacy to the work being done. At the time, there was a perceived "software crisis".
+
+In 1984, the Software Engineering Institute (SEI) was established as a federally funded research and development center headquartered at Carnegie Mellon University in Pittsburgh, Pennsylvania. Watts Humphrey founded the SEI Software Process Program aimed at understanding and managing software engineering processes. The Capability Maturity Model Integration (CMMI) was introduced to define how organizations evaluate software development capabilities.
+
+Modern best practices for software engineering have been collected by ISO/IEC and published as the Software Engineering Body of Knowledge (SWEBOK). Software engineering is considered one of the major computing disciplines.
+
+In modern systems such as edge computing, the Internet of Things, and cyber-physical systems, software plays a critical role. Software engineering is closely related to systems engineering, as software is often the primary means of integrating complex system components.
+
+Terminology and Definitions
+
+Software engineering has been defined in multiple ways:
+
+The systematic application of scientific and technological knowledge, methods, and experience to the design, implementation, testing, and documentation of software.
+
+A disciplined and quantifiable approach to the development, operation, and maintenance of software.
+
+An engineering discipline concerned with all aspects of software production.
+
+The application of sound engineering principles to obtain reliable and efficient software.
+
+A branch of computer science that deals with the design, implementation, and maintenance of complex computer programs.
+
+Software engineering includes not just coding, but also all tools and processes used to build and maintain software over time.
+
+Suitability
+
+There has been debate over whether software engineering qualifies as a true engineering discipline. Some experts consider it a form of engineering, while others argue it should be or that programming is an art and science rather than engineering.
+
+Workload and Activities
+
+Requirements Analysis
+
+Requirements engineering involves elicitation, analysis, specification, and validation of software requirements. Requirements can be functional (expected behaviors), non-functional (performance, security, scalability, etc.), or domain-specific.
+
+Design
+
+Software design involves creating high-level plans and is divided into:
+
+- Interface design: interaction between systems and users
+- Architectural design: structure of system components
+- Detailed design: algorithms and data structures
+
+Construction
+
+Software construction includes coding, unit testing, integration testing, and debugging.
+
+Testing
+
+Software testing evaluates software quality and provides information about defects and risks. Testing is often performed by quality assurance teams.
+
+Program Analysis
+
+Program analysis examines software performance, robustness, and security.
+
+Maintenance
+
+Software maintenance involves updating and improving software after release. This can include bug fixes, optimizations, feature enhancements, and removal of obsolete components. Maintenance may account for 40% to 80% of total software costs.
+
+Education
+
+Knowledge of programming is essential. Many software engineers earn degrees in computer science or software engineering. The SWEBOK outlines recommended knowledge areas.
+
+Universities offer undergraduate and graduate programs in software engineering. Internships and practical experience are important for skill development.
+
+Profession
+
+Licensing requirements vary worldwide. Some regions offer professional titles such as Professional Engineer (P.Eng), Chartered Engineer, or European Engineer.
+
+Organizations like IEEE and ACM provide guidelines, certifications, and codes of ethics.
+
+Employment
+
+There are millions of software engineers worldwide. They work in companies, governments, non-profits, or as freelancers.
+
+Roles include developers, testers, analysts, project managers, and more.
+
+Typical work hours are around 40 per week, though longer hours are common. Health risks include eye strain, back pain, and repetitive strain injuries.
+
+Job growth is strong but influenced by outsourcing and automation.
+
+Certification
+
+Certifications are offered by professional organizations and companies. Some focus on general software engineering knowledge, while others are technology-specific.
+
+Globalization Impact
+
+Outsourcing has moved software development work to countries with lower labor costs.
+
+Global development enables continuous workflows across time zones but introduces communication and coordination challenges.
+
+Prizes
+
+Various awards recognize contributions to software engineering research and practice.
+
+Criticism
+
+Some argue that software engineering lacks sufficient empirical validation and is often misunderstood.
+
+Edsger Dijkstra criticized the concept, calling software engineering a "doomed discipline" due to its inherent challenges.
+
+Conclusion
+
+Software engineering is a vital discipline that combines engineering principles with programming to build reliable, efficient, and scalable software systems.

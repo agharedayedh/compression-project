@@ -1,0 +1,67 @@
+Lossless compression is a class of data compression that allows the original data to be perfectly reconstructed from the compressed data with no loss of information. Lossless compression is possible because most real-world data exhibits statistical redundancy. By contrast, lossy compression permits reconstruction only of an approximation of the original data, though usually with greatly improved compression rates (and therefore reduced media sizes).
+
+By operation of the pigeonhole principle, no lossless compression algorithm can shrink the size of all possible data: some data will get longer by at least one symbol or bit.
+
+Compression algorithms are usually effective for human- and machine-readable documents and cannot shrink the size of random data that contain no redundancy. Different algorithms exist that are designed either with a specific type of input data in mind or with specific assumptions about what kinds of redundancy the uncompressed data are likely to contain.
+
+Lossless data compression is used in many applications. For example, it is used in the ZIP file format and in the GNU tool gzip. It is also often used as a component within lossy data compression technologies (e.g. lossless mid/side joint stereo preprocessing by MP3 encoders and other lossy audio encoders).
+
+Lossless compression is used in cases where it is important that the original and the decompressed data be identical, or where deviations from the original data would be unfavourable. Common examples are executable programs, text documents, and source code. Some image file formats, like PNG or GIF, use only lossless compression, while others like TIFF and MNG may use either lossless or lossy methods. Lossless audio formats are most often used for archiving or production purposes, while smaller lossy audio files are typically used on portable players and in other cases where storage space is limited or exact replication of the audio is unnecessary.
+
+Techniques
+
+Most lossless compression programs do two things in sequence: the first step generates a statistical model for the input data, and the second step uses this model to map input data to bit sequences in such a way that "probable" (i.e. frequently encountered) data will produce shorter output than "improbable" data.
+
+The primary encoding algorithms used to produce bit sequences are Huffman coding (also used by the deflate algorithm) and arithmetic coding. Arithmetic coding achieves compression rates close to the best possible for a particular statistical model, which is given by the information entropy, whereas Huffman compression is simpler and faster but produces poorer results for models that deal with symbol probabilities close to 1.
+
+There are two primary ways of constructing statistical models: in a static model, the data is analyzed and a model is constructed, then this model is stored with the compressed data. This approach is simple and modular, but has the disadvantage that the model itself can be expensive to store, and also that it forces using a single model for all data being compressed, and so performs poorly on files that contain heterogeneous data. Adaptive models dynamically update the model as the data is compressed. Both the encoder and decoder begin with a trivial model, yielding poor compression of initial data, but as they learn more about the data, performance improves. Most popular types of compression used in practice now use adaptive coders.
+
+Lossless compression methods may be categorized according to the type of data they are designed to compress. While, in principle, any general-purpose lossless compression algorithm can be used on any type of data, many are unable to achieve significant compression on data that are not of the form for which they were designed. Many of the lossless compression techniques used for text also work reasonably well for indexed-color images.
+
+Multimedia
+
+These techniques take advantage of the specific characteristics of images such as the common phenomenon of contiguous 2-D areas of similar tones. Every pixel but the first is replaced by the difference to its left neighbor. This leads to small values having a much higher probability than large values. This is often also applied to sound files, and can compress files that contain mostly low frequencies and low volumes. For images, this step can be repeated by taking the difference to the top pixel, and then in videos, the difference to the pixel in the next frame can be taken.
+
+The adaptive encoding uses the probabilities from the previous sample in sound encoding, from the left and upper pixel in image encoding, and additionally from the previous frame in video encoding. In the wavelet transformation, the probabilities are also passed through the hierarchy.
+
+Historical legal issues
+
+Many of these methods are implemented in open-source and proprietary tools, particularly LZW and its variants. Some algorithms are patented in the United States and other countries and their legal usage requires licensing by the patent holder. Because of patents on certain kinds of LZW compression, and in particular licensing practices by patent holder Unisys that many developers considered abusive, some open source proponents encouraged people to avoid using the Graphics Interchange Format (GIF) for compressing still image files in favor of Portable Network Graphics (PNG), which combines the LZ77-based deflate algorithm with a selection of domain-specific prediction filters. However, the patents on LZW expired on June 20, 2003.
+
+Many of the lossless compression techniques used for text also work reasonably well for indexed images, but there are other techniques that do not work for typical text that are useful for some images, and other techniques that take advantage of the specific characteristics of images.
+
+As mentioned previously, lossless sound compression is a somewhat specialized area. Lossless sound compression algorithms can take advantage of repeating patterns shown by the wave-like nature of the data, essentially using autoregressive models to predict the next value and encoding the difference between the expected value and the actual data.
+
+It is sometimes beneficial to compress only the differences between two versions of a file. This is called delta encoding. The term is typically used if both versions are meaningful outside compression and decompression.
+
+Methods
+
+No lossless compression algorithm can efficiently compress all possible data. For this reason, many different algorithms exist that are designed either with a specific type of input data in mind or with specific assumptions about redundancy.
+
+Limitations
+
+Lossless compression algorithms cannot guarantee compression for all input data sets. For any algorithm, there exists at least one input that will not get smaller, and some that get larger.
+
+This follows from the pigeonhole principle. If more inputs than outputs exist, at least two inputs must map to the same output, making perfect reconstruction impossible.
+
+Therefore, it is impossible to design a universal lossless compression algorithm that reduces every input.
+
+The main lesson is that different algorithms are needed for different kinds of data. Compression works by exploiting redundancy, and random data lacks such redundancy.
+
+Mathematical background
+
+A compression algorithm can be viewed as a function mapping input sequences to output sequences. For it to be lossless, the mapping must be injective.
+
+Because there are more possible longer sequences than shorter ones, it is impossible to map all longer sequences to shorter ones without collisions.
+
+This is why perfect universal compression cannot exist.
+
+Real-world applications
+
+Practical compression algorithms detect when data cannot be compressed and may store it uncompressed to avoid size increase.
+
+Some formats include a "store" mode where data is copied without compression when necessary.
+
+Conclusion
+
+Lossless compression is essential for applications where exact data recovery is required. While it cannot compress all data, it is highly effective when applied to data with redundancy and remains a fundamental part of computing, storage, and communication systems.

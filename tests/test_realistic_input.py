@@ -6,13 +6,10 @@ import pytest
 
 from compression.storage import compress_file, decompress_file
 
-
 @pytest.mark.parametrize("algorithm", ["huffman", "lz78"])
 def test_realistic_text_file_roundtrip(tmp_path: Path, algorithm: str) -> None:
     """
     Integration-style test using a real natural-language text file.
-
-    This supports the course requirement of representative inputs.
     """
     source_path = Path(__file__).parent / "data" / "realistic_text.txt"
     if not source_path.exists():
