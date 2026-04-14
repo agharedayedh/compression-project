@@ -10,94 +10,46 @@ from .lz78.codec import decode as lz78_decode
 from .lz78.codec import encode as lz78_encode
 
 Algorithm = Literal["huffman", "lz78"]
-LZ78Token: TypeAlias = list[int | str]
+LZ78Token: TypeAlias = list[int]
 
-# Binary container format:
-# magic (4 bytes) + version (1 byte) + algorithm_id (1 byte)
-# magic = b"CPRJ" (Compression PRoJect)
 _MAGIC = b"CPRJ"
 _VERSION = 1
 
 _ALG_TO_ID: dict[str, int] = {"huffman": 1, "lz78": 2}
 _ID_TO_ALG: dict[int, str] = {1: "huffman", 2: "lz78"}
 
+_LZ78_MARKER_BITS = 1
+_LZ78_BYTE_BITS = 8
+
 
 class StorageError(ValueError):
-    """
-    This error is raised when compressed binary data is invalid
-    or cannot be read correctly.
-    """
+    """Raised when compressed binary data is invalid or cannot be read correctly."""
 
 
 def _pack_header(algorithm: Algorithm) -> bytes:
-    """
-    This function creates the header for the compressed binary format.
-
-    The header stores:
-    - magic bytes to identify the file format
-    - version number
-    - algorithm id
-
-    Args:
-        algorithm (Algorithm): The compression algorithm used.
-
-    Returns:
-        bytes: The packed header as bytes.
-    """
     return _MAGIC + struct.pack(">BB", _VERSION, _ALG_TO_ID[algorithm])
 
 
 def _unpack_header(data: bytes) -> tuple[Algorithm, int]:
-    """
-    This function reads and checks the header of compressed data.
-
-    It makes sure that:
-    - the file is long enough
-    - the magic header is correct
-    - the version is supported
-    - the algorithm id is known
-
-    Args:
-        data (bytes): The compressed binary data.
-
-    Returns:
-        tuple[Algorithm, int]:
-            - the algorithm name
-            - the position where the actual payload starts
-
-    Raises:
-        StorageError: If the header is invalid.
-    """
     if len(data) < 6:
         raise StorageError("Invalid data: too short for header.")
     if data[:4] != _MAGIC:
         raise StorageError("Invalid data: wrong magic header.")
+
     version, alg_id = struct.unpack(">BB", data[4:6])
+
     if version != _VERSION:
         raise StorageError(f"Unsupported format version: {version}")
     if alg_id not in _ID_TO_ALG:
         raise StorageError(f"Unknown algorithm id: {alg_id}")
+
     return _ID_TO_ALG[alg_id], 6
 
 
 def pack_bits(bitstring: str) -> tuple[int, bytes]:
     """
-    This function packs a bit string made of '0' and '1' into bytes.
-
-    Because bytes store 8 bits each, this function groups the bits
-    into bytes and adds padding to the last byte if needed.
-
-    Args:
-        bitstring (str): A string containing only '0' and '1'.
-
-    Returns:
-        tuple[int, bytes]:
-            - the original number of valid bits
-            - the packed bytes
-
-    Raises:
-        StorageError: If the bit string contains characters other than
-        '0' and '1'.
+    Pack a string of '0' and '1' characters into bytes.
+    Returns (bit_length, packed_bytes).
     """
     bit_len = len(bitstring)
     if bit_len == 0:
@@ -110,18 +62,19 @@ def pack_bits(bitstring: str) -> tuple[int, bytes]:
 
     out = bytearray()
     current = 0
-    filled = 0  # how many bits are currently stored in this byte
+    filled = 0
 
     for b in bitstring:
         current = (current << 1) | (1 if b == "1" else 0)
         filled += 1
+
         if filled == 8:
             out.append(current)
             current = 0
             filled = 0
 
     if filled != 0:
-        current = current << (8 - filled)  # pad remaining bits on the right
+        current <<= (8 - filled)
         out.append(current)
 
     return bit_len, bytes(out)
@@ -129,20 +82,7 @@ def pack_bits(bitstring: str) -> tuple[int, bytes]:
 
 def unpack_bits(bit_len: int, data: bytes) -> str:
     """
-    This function unpacks bytes back into a bit string of '0' and '1'.
-
-    The stored bit length is needed because the last byte may contain
-    extra padding bits that should not be included.
-
-    Args:
-        bit_len (int): Number of valid bits in the data.
-        data (bytes): Packed bytes.
-
-    Returns:
-        str: The unpacked bit string.
-
-    Raises:
-        StorageError: If the bit length is invalid or there are not enough bytes.
+    Unpack bytes into a bitstring of exactly bit_len valid bits.
     """
     if bit_len < 0:
         raise StorageError("Invalid bit length.")
@@ -161,46 +101,44 @@ def unpack_bits(bit_len: int, data: bytes) -> str:
         for shift in range(7, -1, -1):
             if produced == bit_len:
                 break
-            bits.append("1" if ((byte >> shift) & 1) == 1 else "0")
+            bits.append("1" if ((byte >> shift) & 1) else "0")
             produced += 1
 
     return "".join(bits)
 
 
+def _read_bits(bits: str, pos: int, n: int) -> tuple[str, int]:
+    end = pos + n
+    if end > len(bits):
+        raise StorageError("Invalid bit-packed data: truncated payload.")
+    return bits[pos:end], end
+
+
+def _lz78_index_width(next_index: int) -> int:
+    """
+    Current number of bits needed to encode references to existing dictionary items.
+
+    next_index is the index that would be assigned to the next new dictionary entry.
+    Existing references are therefore in range 0 .. next_index - 1.
+    """
+    return max(1, (next_index - 1).bit_length())
+
+
 def pack_huffman(freq: dict[str, int], bits: str) -> bytes:
-    """
-    This function stores Huffman compressed data in the project binary format.
-
-    The stored data includes:
-    - the file header
-    - the frequency table
-    - the bit length
-    - the packed bit data
-
-    Args:
-        freq (dict[str, int]): Frequency table of characters.
-        bits (str): Huffman encoded bit string.
-
-    Returns:
-        bytes: Huffman compressed data in binary container format.
-
-    Raises:
-        StorageError: If the frequency table or character data is invalid.
-    """
     payload = bytearray()
     payload += _pack_header("huffman")
 
-    # Sort items to keep the output deterministic
     items = sorted(freq.items(), key=lambda x: x[0])
-
     payload += struct.pack(">I", len(items))
 
     for ch, f in items:
         if f < 0:
             raise StorageError("Invalid frequency table: negative frequency.")
+
         ch_bytes = ch.encode("utf-8")
         if len(ch_bytes) > 65535:
             raise StorageError("Character encoding too long to store.")
+
         payload += struct.pack(">H", len(ch_bytes))
         payload += ch_bytes
         payload += struct.pack(">I", int(f))
@@ -212,55 +150,43 @@ def pack_huffman(freq: dict[str, int], bits: str) -> bytes:
 
 
 def unpack_huffman(data: bytes) -> tuple[dict[str, int], str]:
-    """
-    This function reads Huffman compressed data from the binary container.
-
-    It extracts:
-    - the frequency table
-    - the encoded bit string
-
-    Args:
-        data (bytes): The compressed binary data.
-
-    Returns:
-        tuple[dict[str, int], str]:
-            - the frequency table
-            - the Huffman encoded bit string
-
-    Raises:
-        StorageError: If the data is incomplete or not valid Huffman data.
-    """
     alg, pos = _unpack_header(data)
     if alg != "huffman":
         raise StorageError("Data is not Huffman-compressed.")
 
     if len(data) < pos + 4:
         raise StorageError("Invalid Huffman data: missing symbol count.")
-    (k,) = struct.unpack(">I", data[pos: pos + 4])
+    (k,) = struct.unpack(">I", data[pos:pos + 4])
     pos += 4
 
     freq: dict[str, int] = {}
+
     for _ in range(k):
         if len(data) < pos + 2:
             raise StorageError("Invalid Huffman data: missing char length.")
-        (ch_len,) = struct.unpack(">H", data[pos: pos + 2])
+        (ch_len,) = struct.unpack(">H", data[pos:pos + 2])
         pos += 2
 
         if len(data) < pos + ch_len + 4:
             raise StorageError(
                 "Invalid Huffman data: incomplete char/freq entry.")
 
-        ch_bytes = data[pos: pos + ch_len]
+        ch_bytes = data[pos:pos + ch_len]
         pos += ch_len
-        ch = ch_bytes.decode("utf-8")
 
-        (f,) = struct.unpack(">I", data[pos: pos + 4])
+        try:
+            ch = ch_bytes.decode("utf-8")
+        except UnicodeDecodeError as e:
+            raise StorageError(
+                "Invalid Huffman data: invalid UTF-8 character bytes.") from e
+
+        (f,) = struct.unpack(">I", data[pos:pos + 4])
         pos += 4
         freq[ch] = f
 
     if len(data) < pos + 4:
         raise StorageError("Invalid Huffman data: missing bit length.")
-    (bit_len,) = struct.unpack(">I", data[pos: pos + 4])
+    (bit_len,) = struct.unpack(">I", data[pos:pos + 4])
     pos += 4
 
     bits = unpack_bits(bit_len, data[pos:])
@@ -269,184 +195,165 @@ def unpack_huffman(data: bytes) -> tuple[dict[str, int], str]:
 
 def pack_lz78(tokens: list[LZ78Token]) -> bytes:
     """
-    This function stores LZ78 tokens in the project binary format.
+    Store LZ78 tokens in compact bit-packed form using variable-length indexes.
 
-    The stored data includes:
-    - the file header
-    - number of tokens
-    - each token's index and character
+    For each token:
+    - index is stored using the current dictionary-reference width
+    - then 1 marker bit:
+        0 => normal token, followed by 8-bit byte
+        1 => final leftover token, no byte follows
 
-    Args:
-        tokens (list[LZ78Token]): List of LZ78 tokens.
-
-    Returns:
-        bytes: LZ78 compressed data in binary container format.
-
-    Raises:
-        StorageError: If a token is invalid or cannot be stored.
+    The index width starts at 1 bit and grows automatically as the
+    dictionary would grow during normal LZ78 encoding/decoding.
     """
     payload = bytearray()
     payload += _pack_header("lz78")
     payload += struct.pack(">I", len(tokens))
 
-    for tok in tokens:
+    parts: list[str] = []
+    next_index = 1
+
+    for i, tok in enumerate(tokens):
         if not isinstance(tok, list) or len(tok) != 2:
             raise StorageError(
-                "Invalid token format for packing. Expected [index, char].")
+                "Invalid token format for packing. Expected [index, byte].")
 
-        idx, ch = tok
+        idx, byte_value = tok
+
         if not isinstance(idx, int):
             raise StorageError("Invalid token index type for packing.")
+        if not isinstance(byte_value, int):
+            raise StorageError("Invalid token byte type for packing.")
         if idx < 0:
             raise StorageError(
-                "Invalid token index for packing: negative index.")
-        if not isinstance(ch, str):
-            raise StorageError("Invalid token char type for packing.")
+                f"Invalid token index for packing: {idx} must be non-negative.")
 
-        ch_bytes = ch.encode("utf-8")
-        if len(ch_bytes) > 65535:
-            raise StorageError("Token character encoding too long to store.")
+        width = _lz78_index_width(next_index)
+        max_ref = next_index - 1
+        if idx > max_ref:
+            raise StorageError(
+                f"Invalid token index for packing: {idx} exceeds current dictionary max {max_ref}."
+            )
 
-        payload += struct.pack(">I", idx)
-        payload += struct.pack(">H", len(ch_bytes))
-        payload += ch_bytes
+        parts.append(f"{idx:0{width}b}")
 
+        if byte_value == -1:
+            if i != len(tokens) - 1:
+                raise StorageError(
+                    "Invalid token for packing: -1 byte is only allowed in final token.")
+            parts.append("1")
+        else:
+            if not 0 <= byte_value <= 255:
+                raise StorageError(
+                    f"Invalid token byte for packing: {byte_value} not in 0..255 or -1."
+                )
+            parts.append("0")
+            parts.append(f"{byte_value:08b}")
+            next_index += 1
+
+    bit_len, packed = pack_bits("".join(parts))
+    payload += struct.pack(">I", bit_len)
+    payload += packed
     return bytes(payload)
 
 
 def unpack_lz78(data: bytes) -> list[LZ78Token]:
-    """
-    This function reads LZ78 compressed data from the binary container.
-
-    It extracts the list of tokens stored in the file.
-
-    Args:
-        data (bytes): The compressed binary data.
-
-    Returns:
-        list[LZ78Token]: The unpacked list of LZ78 tokens.
-
-    Raises:
-        StorageError: If the data is incomplete or not valid LZ78 data.
-    """
     alg, pos = _unpack_header(data)
     if alg != "lz78":
         raise StorageError("Data is not LZ78-compressed.")
 
     if len(data) < pos + 4:
         raise StorageError("Invalid LZ78 data: missing token count.")
-    (n,) = struct.unpack(">I", data[pos: pos + 4])
+    (n,) = struct.unpack(">I", data[pos:pos + 4])
     pos += 4
 
+    if len(data) < pos + 4:
+        raise StorageError("Invalid LZ78 data: missing payload bit length.")
+    (bit_len,) = struct.unpack(">I", data[pos:pos + 4])
+    pos += 4
+
+    bits = unpack_bits(bit_len, data[pos:])
+    bit_pos = 0
     tokens: list[LZ78Token] = []
-    for _ in range(n):
-        if len(data) < pos + 4 + 2:
-            raise StorageError("Invalid LZ78 data: incomplete token header.")
+    next_index = 1
 
-        (idx,) = struct.unpack(">I", data[pos: pos + 4])
-        pos += 4
+    for token_i in range(n):
+        width = _lz78_index_width(next_index)
 
-        (ch_len,) = struct.unpack(">H", data[pos: pos + 2])
-        pos += 2
+        idx_bits, bit_pos = _read_bits(bits, bit_pos, width)
+        marker_bits, bit_pos = _read_bits(bits, bit_pos, _LZ78_MARKER_BITS)
 
-        if len(data) < pos + ch_len:
+        idx = int(idx_bits, 2)
+        marker = int(marker_bits, 2)
+
+        max_ref = next_index - 1
+        if idx > max_ref:
             raise StorageError(
-                "Invalid LZ78 data: incomplete token char bytes.")
+                "Invalid LZ78 data: token index exceeds current dictionary.")
 
-        ch_bytes = data[pos: pos + ch_len]
-        pos += ch_len
-        ch = ch_bytes.decode("utf-8")
+        if marker == 1:
+            if token_i != n - 1:
+                raise StorageError(
+                    "Invalid LZ78 data: final-token marker used before the end.")
+            tokens.append([idx, -1])
+            continue
 
-        tokens.append([idx, ch])
+        byte_bits, bit_pos = _read_bits(bits, bit_pos, _LZ78_BYTE_BITS)
+        byte_value = int(byte_bits, 2)
+        tokens.append([idx, byte_value])
+        next_index += 1
+
+    if any(bit != "0" for bit in bits[bit_pos:]):
+        raise StorageError("Invalid LZ78 data: non-zero trailing bits.")
 
     return tokens
 
 
 def detect_algorithm(data: bytes) -> Algorithm:
-    """
-    This function checks which compression algorithm was used
-    in the binary container.
-
-    Args:
-        data (bytes): The compressed binary data.
-
-    Returns:
-        Algorithm: Either "huffman" or "lz78".
-    """
     alg, _ = _unpack_header(data)
     return alg
 
 
 def compress_bytes(text: str, algorithm: Algorithm = "huffman") -> bytes:
-    """
-    This function compresses a text string into binary container bytes.
-
-    Depending on the selected algorithm, it uses either Huffman coding
-    or LZ78 and then stores the result in the project binary format.
-
-    Args:
-        text (str): Input text to compress.
-        algorithm (Algorithm): Compression method to use.
-
-    Returns:
-        bytes: The compressed data in binary container format.
-
-    Raises:
-        ValueError: If the algorithm name is not supported.
-    """
     if algorithm == "huffman":
         freq, bits = huff_encode(text)
         return pack_huffman(freq, bits)
 
     if algorithm == "lz78":
-        tokens = lz78_encode(text)
+        raw = text.encode("utf-8")
+        tokens = lz78_encode(raw)
         return pack_lz78(tokens)
 
     raise ValueError(f"Unknown algorithm: {algorithm}")
 
 
 def decompress_bytes(data: bytes) -> str:
-    """
-    This function decompresses binary container data back into text.
-
-    It first detects which algorithm was used and then calls
-    the correct decompression method.
-
-    Args:
-        data (bytes): The compressed binary data.
-
-    Returns:
-        str: The original decompressed text.
-
-    Raises:
-        StorageError: If the data format is invalid.
-    """
     alg = detect_algorithm(data)
 
-    if alg == "huffman":
-        freq, bits = unpack_huffman(data)
-        return huff_decode(freq, bits)
+    try:
+        if alg == "huffman":
+            freq, bits = unpack_huffman(data)
+            return huff_decode(freq, bits)
 
-    if alg == "lz78":
-        tokens = unpack_lz78(data)
-        return lz78_decode(tokens)
+        if alg == "lz78":
+            tokens = unpack_lz78(data)
+            raw = lz78_decode(tokens)
+            return raw.decode("utf-8")
+    except UnicodeDecodeError as e:
+        raise StorageError(
+            "Invalid compressed data: decompressed bytes are not valid UTF-8.") from e
+    except ValueError as e:
+        raise StorageError(f"Invalid compressed data: {e}") from e
 
     raise StorageError(
         "Invalid compressed data: missing/unknown algorithm field.")
 
 
-def compress_file(input_path: str | Path, output_path: str | Path, algorithm: Algorithm = "huffman") -> None:
-    """
-    This function compresses a UTF-8 text file into a binary file.
-
-    Args:
-        input_path (str | Path): Path to the input text file.
-        output_path (str | Path): Path where the compressed file will be saved.
-        algorithm (Algorithm): Compression algorithm to use.
-
-    Returns:
-        None
-    """
+def compress_file(
+    input_path: str | Path,
+    output_path: str | Path,
+    algorithm: Algorithm = "huffman",
+) -> None:
     in_path = Path(input_path)
     out_path = Path(output_path)
 
@@ -455,16 +362,6 @@ def compress_file(input_path: str | Path, output_path: str | Path, algorithm: Al
 
 
 def decompress_file(input_path: str | Path, output_path: str | Path) -> None:
-    """
-    This function decompresses a binary compressed file back into a UTF-8 text file.
-
-    Args:
-        input_path (str | Path): Path to the compressed binary file.
-        output_path (str | Path): Path where the decompressed text file will be saved.
-
-    Returns:
-        None
-    """
     in_path = Path(input_path)
     out_path = Path(output_path)
 

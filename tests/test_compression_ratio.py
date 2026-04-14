@@ -1,110 +1,71 @@
 from __future__ import annotations
+
 from pathlib import Path
-import pytest
+
 from compression.storage import compress_file
 
-"""
-This file contains tests for checking if the compression algorithms
-actually reduce file size in different situations.
 
-The tests use temporary files and compare the original size
-with the compressed size.
-"""
+def _load_natural_language_corpus() -> str:
+    corpus_dir = Path("data") / "corpus"
+    parts: list[str] = []
 
+    for path in sorted(corpus_dir.glob("*.txt")):
+        text = path.read_text(encoding="utf-8").strip()
+        if text:
+            parts.append(text)
 
-def _write_text(path: Path, text: str) -> None:
-    """
-    Helper function to write text into a file.
+    if not parts:
+        raise AssertionError("No usable files found in data/corpus/.")
 
-    Args:
-        path (Path): File path where text will be written.
-        text (str): Text content to write.
-
-    Returns:
-        None
-    """
-    path.write_text(text, encoding="utf-8")
+    return "\n\n".join(parts)
 
 
-def _compress_and_sizes(
-    tmp_path: Path, text: str, algorithm: str
-) -> tuple[int, int]:
-    """
-    Helper function that:
-    - writes text to a file
-    - compresses it using the selected algorithm
-    - returns the original and compressed file sizes
+def _safe_prefix_to_size(text: str, target_bytes: int) -> str:
+    raw = text.encode("utf-8")
+    if len(raw) <= target_bytes:
+        return text
+    return raw[:target_bytes].decode("utf-8", errors="ignore")
 
-    Args:
-        tmp_path (Path): Temporary directory provided by pytest.
-        text (str): Input text to compress.
-        algorithm (str): Compression algorithm ("huffman" or "lz78").
 
-    Returns:
-        tuple[int, int]:
-            - original file size in bytes
-            - compressed file size in bytes
-    """
-    in_path = tmp_path / "input.txt"
-    out_path = tmp_path / "compressed.bin"
+def _compressed_size(tmp_path: Path, text: str, algorithm: str) -> tuple[int, int]:
+    in_path = tmp_path / f"{algorithm}_input.txt"
+    out_path = tmp_path / f"{algorithm}_output.bin"
 
-    _write_text(in_path, text)
+    in_path.write_text(text, encoding="utf-8")
     compress_file(in_path, out_path, algorithm=algorithm)
 
-    original_size = in_path.stat().st_size
-    compressed_size = out_path.stat().st_size
-    return original_size, compressed_size
+    return in_path.stat().st_size, out_path.stat().st_size
 
 
-@pytest.mark.parametrize("algorithm", ["huffman", "lz78"])
-def test_compression_smaller_for_highly_repetitive_input(
-    tmp_path: Path, algorithm: str
-) -> None:
-    """
-    This test checks that compression works well for highly repetitive input.
+def test_huffman_compresses_real_natural_language_text(tmp_path: Path) -> None:
+    corpus = _load_natural_language_corpus()
+    text = _safe_prefix_to_size(corpus, 100 * 1024)
 
-    The text is just one character repeated many times,
-    which should be very easy to compress.
+    original_size, compressed_size = _compressed_size(
+        tmp_path, text, "huffman")
+    ratio = compressed_size / original_size
 
-    The test passes if the compressed file is smaller than the original.
-    """
-    text = "a" * 200_000
-
-    original_size, compressed_size = _compress_and_sizes(
-        tmp_path, text, algorithm
-    )
-
-    assert compressed_size < original_size, (
-        f"Expected compression to reduce size for repetitive input. "
-        f"algorithm={algorithm}, original={original_size}, compressed={compressed_size}"
-    )
+    assert compressed_size < original_size
+    assert ratio < 0.65, f"Unexpected Huffman ratio: {ratio:.3f}"
 
 
-def test_huffman_compression_smaller_for_large_structured_text(
-    tmp_path: Path,
-) -> None:
-    """
-    This test checks Huffman compression on more realistic text.
+def test_lz78_compresses_1kb_natural_language_reasonably(tmp_path: Path) -> None:
+    corpus = _load_natural_language_corpus()
+    text = _safe_prefix_to_size(corpus, 1 * 1024)
 
-    The input is a paragraph repeated many times,
-    which simulates natural language with some structure.
+    original_size, compressed_size = _compressed_size(tmp_path, text, "lz78")
+    ratio = compressed_size / original_size
 
-    The test passes if the compressed file is smaller than the original.
-    """
-    paragraph = (
-        "Lossless compression is useful when the exact original text must be recovered. "
-        "Natural language contains repeated words, spaces, and punctuation, "
-        "which often makes it compressible in practice. "
-        "This test uses a larger structured text input to verify that Huffman "
-        "can reduce file size on non-trivial text.\n"
-    )
-    text = paragraph * 3000
+    assert compressed_size < original_size
+    assert ratio < 0.80, f"Expected LZ78 to compress 1kB text, got ratio {ratio:.3f}"
 
-    original_size, compressed_size = _compress_and_sizes(
-        tmp_path, text, "huffman"
-    )
 
-    assert compressed_size < original_size, (
-        "Expected Huffman compression to reduce file size for large structured text. "
-        f"original={original_size}, compressed={compressed_size}"
-    )
+def test_lz78_compresses_100kb_natural_language_well(tmp_path: Path) -> None:
+    corpus = _load_natural_language_corpus()
+    text = _safe_prefix_to_size(corpus, 100 * 1024)
+
+    original_size, compressed_size = _compressed_size(tmp_path, text, "lz78")
+    ratio = compressed_size / original_size
+
+    assert compressed_size < original_size
+    assert ratio < 0.60, f"Expected LZ78 ratio below 0.60 at 100kB, got {ratio:.3f}"

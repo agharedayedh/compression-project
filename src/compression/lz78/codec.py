@@ -1,113 +1,100 @@
 from __future__ import annotations
 
-Token = list[int | str]
+Token = list[int]
 
 
-def encode(text: str) -> list[Token]:
+def encode(data: bytes) -> list[Token]:
     """
-    This function compresses a string using the LZ78 algorithm.
+    Compress bytes using LZ78 with variable-length indexes.
 
-    The algorithm builds a dictionary of patterns while reading the text.
-    Each output token is a pair:
-        [index, character]
+    Each token is:
+        [index, byte]
 
-    - index: refers to a previous pattern in the dictionary
-    - character: the next new character to add
+    where:
+    - index refers to a previously seen phrase
+    - byte is the next literal byte (0..255)
 
-    Args:
-        text (str): The input text that we want to compress.
-
-    Returns:
-        list[Token]: A list of tokens representing the compressed data.
-
-    Notes:
-        - The dictionary starts with an empty string at index 0.
-        - New patterns are added as they are discovered.
-        - If the text ends with an already known pattern,
-          a final token is added with an empty string "".
+    A final leftover phrase is emitted as:
+        [index, -1]
     """
-    dictionary: dict[str, int] = {"": 0}
+    dictionary: dict[bytes, int] = {b"": 0}
     next_index = 1
 
-    w = ""
+    w = b""
     out: list[Token] = []
 
-    for ch in text:
-        wc = w + ch  # try to extend current pattern
+    for b in data:
+        byte_seq = bytes([b])
+        wb = w + byte_seq
 
-        if wc in dictionary:
-            w = wc  # pattern exists, keep building it
-        else:
-            out.append([dictionary[w], ch])  # output token
-            dictionary[wc] = next_index  # add new pattern
-            next_index += 1
-            w = ""  # reset pattern
+        if wb in dictionary:
+            w = wb
+            continue
 
-    # If we end with a known pattern, output a final token
-    if w != "":
-        out.append([dictionary[w], ""])
+        out.append([dictionary[w], b])
+        dictionary[wb] = next_index
+        next_index += 1
+        w = b""
+
+    if w:
+        out.append([dictionary[w], -1])
 
     return out
 
 
-def decode(tokens: list[Token]) -> str:
+def decode(tokens: list[Token]) -> bytes:
     """
-    This function decompresses LZ78 tokens back into the original text.
+    Decompress LZ78 tokens back into the original bytes.
 
-    It rebuilds the dictionary step by step using the tokens.
-    Each token contains:
-        [index, character]
-
-    - index: refers to a previous dictionary entry
-    - character: the next character to add
-
-    Args:
-        tokens (list[Token]): The compressed tokens from the encode() function.
-
-    Returns:
-        str: The original uncompressed text.
+    Valid tokens are:
+    - [index, byte] where byte is 0..255
+    - final token [index, -1] for leftover phrase
 
     Raises:
-        ValueError:
-            - If the token format is wrong
-            - If the index does not exist in the dictionary
-
-    Notes:
-        - The dictionary is rebuilt in the same order as encoding.
-        - If the character is "", it means no new character is added
-          (used for the final token).
+        ValueError: if token structure or references are invalid.
     """
-    dictionary: dict[int, str] = {0: ""}
+    dictionary: dict[int, bytes] = {0: b""}
     next_index = 1
+    parts: list[bytes] = []
 
-    parts: list[str] = []
-
-    for token in tokens:
+    for i, token in enumerate(tokens):
         if not isinstance(token, list) or len(token) != 2:
-            raise ValueError("Invalid token format. Expected [index, char].")
+            raise ValueError("Invalid token format. Expected [index, byte].")
 
-        idx_raw, ch_raw = token
+        idx_raw, byte_raw = token
 
         if not isinstance(idx_raw, int):
             raise ValueError("Invalid token index. Expected int.")
-        if not isinstance(ch_raw, str):
-            raise ValueError("Invalid token char. Expected str.")
+        if not isinstance(byte_raw, int):
+            raise ValueError("Invalid token byte. Expected int.")
 
+        if idx_raw < 0:
+            raise ValueError(
+                f"Invalid token index {idx_raw}: must be non-negative.")
         if idx_raw not in dictionary:
             raise ValueError(
                 f"Invalid token index {idx_raw}: not in dictionary.")
 
         base = dictionary[idx_raw]
 
-        # If char is empty, just use the base pattern
-        if ch_raw == "":
+        if byte_raw == -1:
+            if i != len(tokens) - 1:
+                raise ValueError(
+                    "Invalid token: -1 byte is only allowed in the final token.")
+            if idx_raw == 0:
+                raise ValueError(
+                    "Invalid token: [0, -1] does not encode any data.")
             parts.append(base)
             continue
 
-        phrase = base + ch_raw
+        if not 0 <= byte_raw <= 255:
+            raise ValueError(
+                f"Invalid token byte {byte_raw}: must be in range 0..255 or -1.")
+
+        phrase = base + bytes([byte_raw])
         parts.append(phrase)
 
-        dictionary[next_index] = phrase  # add new pattern
+        dictionary[next_index] = phrase
         next_index += 1
 
-    return "".join(parts)
+    return b"".join(parts)
