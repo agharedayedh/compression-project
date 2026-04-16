@@ -5,17 +5,26 @@ Token = list[int]
 
 def encode(data: bytes) -> list[Token]:
     """
-    Compress bytes using LZ78 with variable-length indexes.
+    Compress input bytes using the LZ78 algorithm.
 
-    Each token is:
+    The algorithm builds a dictionary of byte patterns while reading
+    the input from left to right.
+
+    Each output token has the form:
         [index, byte]
 
     where:
-    - index refers to a previously seen phrase
-    - byte is the next literal byte (0..255)
+    - index points to an earlier dictionary entry
+    - byte is the next new byte that extends that pattern
 
-    A final leftover phrase is emitted as:
-        [index, -1]
+    If the input ends with a pattern that is already in the dictionary,
+    a final token [index, -1] is added.
+
+    Args:
+        data (bytes): Input data to compress.
+
+    Returns:
+        list[Token]: A list of LZ78 tokens.
     """
     dictionary: dict[bytes, int] = {b"": 0}
     next_index = 1
@@ -36,6 +45,8 @@ def encode(data: bytes) -> list[Token]:
         next_index += 1
         w = b""
 
+    # If the input ends with an already known pattern,
+    # store one final token without a new byte.
     if w:
         out.append([dictionary[w], -1])
 
@@ -46,12 +57,22 @@ def decode(tokens: list[Token]) -> bytes:
     """
     Decompress LZ78 tokens back into the original bytes.
 
+    The function rebuilds the dictionary in the same order that
+    encoding created it.
+
     Valid tokens are:
-    - [index, byte] where byte is 0..255
-    - final token [index, -1] for leftover phrase
+    - [index, byte], where byte is in the range 0..255
+    - [index, -1] as the final token for a leftover phrase
+
+    Args:
+        tokens (list[Token]): Compressed LZ78 tokens.
+
+    Returns:
+        bytes: The original decompressed bytes.
 
     Raises:
-        ValueError: if token structure or references are invalid.
+        ValueError: If the token structure is invalid,
+        the index does not exist, or the final-token rule is broken.
     """
     dictionary: dict[int, bytes] = {0: b""}
     next_index = 1

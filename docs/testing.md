@@ -1,5 +1,7 @@
 # Testing Document
 
+---
+
 ## Overview
 
 Testing ensures that the implemented compression algorithms are correct, reliable, and lossless.
@@ -8,17 +10,21 @@ The primary correctness requirement of this project is:
 
 > After compressing and decompressing input, the restored output must match the original exactly.
 
+---
+
+## Testing Tools
+
 Testing was implemented using:
 
-- `pytest` for automated tests
-- `pytest-cov` for coverage measurement
+- `pytest` for automated tests  
+- `pytest-cov` for coverage measurement  
 
 The testing strategy combines:
 
-- unit testing
-- integration testing
-- end-to-end testing
-- empirical compression-ratio evaluation
+- unit testing  
+- integration testing  
+- end-to-end testing  
+- empirical compression-ratio evaluation  
 
 ---
 
@@ -32,12 +38,13 @@ poetry run pytest --cov --cov-report=term-missing
 
 ### Week 6 Coverage Summary
 
-- Total coverage: approximately 75–80%  
-- Core algorithm files (Huffman and LZ78 codecs): about 99–100%  
+- Total coverage: approximately **75–80%**  
+- Core algorithm files (Huffman and LZ78 codecs): **~99–100%**  
 - Storage layer: majority covered  
-- CLI logic: only partly covered  
+- CLI logic: partly covered  
 
-Coverage was used as a diagnostic tool, not as the only goal. The main focus was testing correctness-critical logic.
+Coverage was used as a **diagnostic tool**, not as a goal.  
+The focus was on testing correctness-critical logic.
 
 A coverage snapshot is saved as:
 
@@ -46,6 +53,45 @@ docs/coverage_week6.txt
 ```
 
 ---
+
+## Final Results Summary
+
+Compression performance was re-evaluated after implementing the final improvements to the LZ78 algorithm.
+
+
+- All tests pass successfully (35 passed)  
+- Huffman compression remains stable across all input sizes  
+- LZ78 compression performance improved significantly compared to earlier versions  
+
+Results now align with expected real-world behavior for natural-language compression
+
+---
+
+## Impact of Changes
+
+The improvement is mainly due to:
+
+- switching to byte-based encoding  
+- using variable-length index representation  
+- applying bit-level packing for token storage  
+
+These changes reduce overhead and make the algorithm significantly more efficient.
+
+---
+
+## Output Snapshot
+
+A coverage snapshot is saved as:
+
+```
+docs/coverage_final.txt
+```
+
+A comparison snapshot is saved as:
+
+```
+docs/comparison_output.txt
+```
 
 ## What Was Tested and How?
 
@@ -73,20 +119,25 @@ This verifies:
 - correct encoding  
 - correct decoding  
 
-#### Edge Cases
+---
 
-The following special cases were tested:
+#### Edge Cases
 
 - empty string  
 - single repeated character (e.g. `"aaaaaa"`)  
 - Unicode text  
 
+---
+
 #### Invalid Input Handling
 
-The tests verify that the decoder raises `ValueError` for:
+The decoder is tested to ensure it raises errors for:
 
 - bitstrings containing characters other than `"0"` and `"1"`  
 - incomplete encoded bitstrings  
+- invalid traversal paths in the Huffman tree  
+
+This ensures strict validation of corrupted or malformed compressed data.
 
 ---
 
@@ -94,43 +145,66 @@ The tests verify that the decoder raises `ValueError` for:
 
 **Test file:** `tests/test_lz78.py`
 
+#### Implementation Details
+
+The final LZ78 implementation operates on **raw bytes**, not Python strings.  
+This avoids UTF-8 overhead and improves compression efficiency.
+
+Each token has the form:
+
+```
+[index, byte]
+```
+
+Where:
+
+- `index` is a reference to a previously seen phrase  
+- `byte` is an integer in the range `0–255`  
+- a special value `-1` is used only in the final token  
+
+---
+
 #### Roundtrip Correctness
 
 Example:
 
 ```python
-text = "abracadabra"
-tokens = encode(text)
+data = b"abracadabra"
+tokens = encode(data)
 restored = decode(tokens)
-assert restored == text
+assert restored == data
 ```
+
+---
 
 #### Additional Cases
 
-The tests include:
-
 - repetitive input  
-- spaces and punctuation  
-- Unicode input  
+- structured text  
+- UTF-8 encoded text  
+
+---
 
 #### Token Validation
 
-The tests verify that produced tokens have the expected structure:
+The tests verify that:
 
-- token is a list  
-- length is 2  
-- first value is an integer  
-- second value is a string  
+- tokens are lists  
+- each token has exactly two elements  
+- both elements are integers  
+
+---
 
 #### Invalid Token Handling
 
-The decoder is tested against invalid inputs, such as:
+The decoder is tested against invalid inputs:
 
 - non-list tokens  
 - wrong token length  
 - non-integer index  
-- non-string character  
-- invalid dictionary reference  
+- non-integer byte  
+- invalid dictionary references  
+- incorrect placement of final token marker  
 
 ---
 
@@ -144,13 +218,13 @@ These tests verify the full in-memory pipeline:
 2. decompress the result  
 3. compare it with the original text  
 
-This ensures that:
+This ensures:
 
-- compression and decompression work together correctly  
-- the storage layer is correct  
-- algorithm detection during decompression works  
+- correct integration of algorithm and storage  
+- correct algorithm detection during decompression  
+- lossless behavior  
 
-The tests also include empty input and invalid compressed data.
+Invalid compressed data is also tested to ensure safe failure.
 
 ---
 
@@ -158,14 +232,14 @@ The tests also include empty input and invalid compressed data.
 
 **Test file:** `tests/test_file_pipeline.py`
 
-These tests verify the file-based pipeline:
+These tests verify the file-based workflow:
 
 1. write a UTF-8 text file  
-2. compress it to a binary file  
-3. decompress it to a new text file  
-4. compare the restored text with the original  
+2. compress it  
+3. decompress it  
+4. compare the restored output  
 
-This validates that the complete file-processing workflow behaves correctly for both algorithms.
+This ensures that the complete file-processing pipeline works correctly for both algorithms.
 
 ---
 
@@ -173,7 +247,7 @@ This validates that the complete file-processing workflow behaves correctly for 
 
 **Test file:** `tests/test_realistic_input.py`
 
-A realistic text file is stored in:
+A realistic text file is used:
 
 ```
 tests/data/realistic_text.txt
@@ -181,12 +255,12 @@ tests/data/realistic_text.txt
 
 #### Procedure
 
-1. read the text file  
-2. compress it using both algorithms  
-3. decompress the result  
-4. verify exact equality with the original  
+1. read the file  
+2. compress using both algorithms  
+3. decompress  
+4. verify exact equality  
 
-This gives an integration-style test using realistic natural-language input rather than only short artificial strings.
+This provides an integration-style test with real-world input.
 
 ---
 
@@ -194,46 +268,81 @@ This gives an integration-style test using realistic natural-language input rath
 
 **Test file:** `tests/test_compression_ratio.py`
 
-These tests verify expected compression behavior.
+These tests verify realistic compression performance.
 
-#### Highly Repetitive Input
+---
 
-Example:
+#### Natural-Language Corpus
 
-```python
-text = "a" * 200_000
+A corpus is constructed from multiple independent text files:
+
+```
+data/corpus/
 ```
 
-This input is intentionally highly repetitive. It is used to verify that both algorithms reduce size where compression should clearly help.
+This avoids artificial repetition and better represents real input.
 
-#### Large Structured Text Input
+---
 
-Another test uses a larger structured text input to verify that Huffman compression reduces file size on non-trivial text.
+#### Procedure
 
-This test is useful for checking compression behavior, but it is not treated as the main source of realistic performance evaluation.
+For each target size:
+
+1. take a prefix of the corpus  
+2. compress it  
+3. measure compressed size  
+4. compute compression ratio  
+
+---
+
+#### Expected Behavior
+
+- Huffman should consistently reduce file size  
+- LZ78 should:
+  - perform poorly on very small inputs  
+  - improve as input size increases  
+  - achieve good compression for large inputs  
+
+---
+
+#### Purpose
+
+These tests ensure that:
+
+- compression is effective in practice  
+- implementation choices (e.g. variable-length indexes) improve performance  
+- results align with theoretical expectations  
 
 ---
 
 ## Representativeness of Inputs
 
-Particular care was taken to use inputs that reveal different aspects of correctness.
-
 The tests include:
 
 - empty strings  
-- small deterministic strings  
+- small deterministic inputs  
 - single-character repetition  
-- repetitive patterns (e.g. `"abcabcabc"`)  
-- Unicode text (including emoji and Arabic characters)  
-- realistic natural-language text files  
-- longer structured text inputs  
-- highly repetitive long strings  
+- repetitive patterns  
+- Unicode text (emoji, Arabic, etc.)  
+- realistic natural-language text  
+- large structured inputs  
 
-Realistic natural-language inputs were used to represent practical use cases.
+Two categories are clearly separated:
 
-Highly repetitive inputs were also tested separately because they help understand algorithm behavior in ideal compression conditions.
+### 1. Artificial Inputs
 
-These two categories were kept conceptually separate. Artificial repetition of the same natural-language text was avoided in performance evaluation because it can create unrealistic results, especially for dictionary-based compression algorithms such as LZ78.
+Used for:
+
+- correctness testing  
+- edge cases  
+
+### 2. Natural-Language Inputs
+
+Used for:
+
+- realistic performance evaluation  
+
+Artificial repetition of natural-language text is avoided because it can produce misleading results, especially for dictionary-based compression.
 
 ---
 
@@ -247,25 +356,23 @@ From the project root:
 poetry run pytest
 ```
 
-### Run tests with coverage
+### Run with coverage
 
 ```bash
 poetry run pytest --cov --cov-report=term-missing
 ```
 
-### Run a specific test file
+### Run a specific file
 
 ```bash
-poetry run pytest tests/test_huffman.py
+poetry run pytest tests/test_lz78.py
 ```
-
-All results described in this document can be reproduced with these commands.
 
 ---
 
 ## Empirical Testing Results
 
-In addition to automated tests, empirical comparison was performed using:
+Empirical comparison is performed using:
 
 ```
 src/compression/script/compare_compression.py
@@ -279,13 +386,10 @@ poetry run python -m compression.script.compare_compression
 
 The script:
 
-- reads a corpus consisting of multiple different natural-language text files  
-- takes prefixes of increasing size  
-- compresses them using both algorithms  
-- measures compressed size  
+- reads a natural-language corpus  
+- evaluates increasing input sizes  
+- compares both algorithms  
 - reports compression ratios  
-
-This comparison is intended to study how the algorithms behave on representative natural-language input.
 
 ---
 
@@ -294,19 +398,21 @@ This comparison is intended to study how the algorithms behave on representative
 The project includes:
 
 - unit tests for algorithm correctness  
-- invalid-input tests  
+- strict invalid-input testing  
 - integration tests  
 - end-to-end tests  
 - file-based tests  
-- realistic input tests  
-- empirical compression-ratio evaluation  
-- coverage measurement  
+- realistic input testing  
+- empirical compression evaluation  
+- coverage analysis  
 
-### Testing Focus
+---
+
+## Testing Focus
 
 - correctness  
 - lossless behavior  
-- representative inputs  
-- practical validation  
+- robustness against invalid data  
+- realistic performance  
 
 The combination of unit testing and broader empirical evaluation provides strong confidence that the compression system is correctly implemented.

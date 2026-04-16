@@ -6,6 +6,18 @@ from compression.storage import compress_file
 
 
 def _load_natural_language_corpus() -> str:
+    """
+    Load the natural-language corpus used in compression tests.
+
+    The function reads all .txt files from data/corpus/,
+    removes empty files, and combines the text into one string.
+
+    Returns:
+        str: Combined corpus text.
+
+    Raises:
+        AssertionError: If no usable corpus files are found.
+    """
     corpus_dir = Path("data") / "corpus"
     parts: list[str] = []
 
@@ -21,6 +33,19 @@ def _load_natural_language_corpus() -> str:
 
 
 def _safe_prefix_to_size(text: str, target_bytes: int) -> str:
+    """
+    Take a prefix of the text that fits into the wanted byte size.
+
+    This is done safely for UTF-8 so that the returned string
+    does not end in the middle of a multi-byte character.
+
+    Args:
+        text (str): Input text.
+        target_bytes (int): Wanted size in bytes.
+
+    Returns:
+        str: Prefix of the text that fits in the target size.
+    """
     raw = text.encode("utf-8")
     if len(raw) <= target_bytes:
         return text
@@ -28,6 +53,19 @@ def _safe_prefix_to_size(text: str, target_bytes: int) -> str:
 
 
 def _compressed_size(tmp_path: Path, text: str, algorithm: str) -> tuple[int, int]:
+    """
+    Write text to a temporary file, compress it, and return file sizes.
+
+    Args:
+        tmp_path (Path): Temporary directory provided by pytest.
+        text (str): Input text to compress.
+        algorithm (str): Compression algorithm to use.
+
+    Returns:
+        tuple[int, int]:
+            - original file size in bytes
+            - compressed file size in bytes
+    """
     in_path = tmp_path / f"{algorithm}_input.txt"
     out_path = tmp_path / f"{algorithm}_output.bin"
 
@@ -38,6 +76,13 @@ def _compressed_size(tmp_path: Path, text: str, algorithm: str) -> tuple[int, in
 
 
 def test_huffman_compresses_real_natural_language_text(tmp_path: Path) -> None:
+    """
+    Test that Huffman coding compresses realistic natural-language text.
+
+    The test uses a 100 kB prefix of the corpus and checks that:
+    - compressed size is smaller than original size
+    - compression ratio stays below an expected limit
+    """
     corpus = _load_natural_language_corpus()
     text = _safe_prefix_to_size(corpus, 100 * 1024)
 
@@ -50,6 +95,13 @@ def test_huffman_compresses_real_natural_language_text(tmp_path: Path) -> None:
 
 
 def test_lz78_compresses_1kb_natural_language_reasonably(tmp_path: Path) -> None:
+    """
+    Test that LZ78 compresses a small natural-language input reasonably well.
+
+    The test uses a 1 kB prefix of the corpus and checks that:
+    - compressed size is smaller than original size
+    - compression ratio stays below an expected limit
+    """
     corpus = _load_natural_language_corpus()
     text = _safe_prefix_to_size(corpus, 1 * 1024)
 
@@ -61,6 +113,13 @@ def test_lz78_compresses_1kb_natural_language_reasonably(tmp_path: Path) -> None
 
 
 def test_lz78_compresses_100kb_natural_language_well(tmp_path: Path) -> None:
+    """
+    Test that LZ78 compresses a larger natural-language input effectively.
+
+    The test uses a 100 kB prefix of the corpus and checks that:
+    - compressed size is smaller than original size
+    - compression ratio stays below an expected limit
+    """
     corpus = _load_natural_language_corpus()
     text = _safe_prefix_to_size(corpus, 100 * 1024)
 

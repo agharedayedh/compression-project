@@ -6,7 +6,7 @@
 
 The project is implemented as a modular Python package located under:
 
-```text
+```
 src/compression
 ```
 
@@ -24,6 +24,7 @@ Implements **Huffman coding**:
 - Huffman tree construction using a priority queue  
 - code table generation  
 - encoding and decoding functions  
+- strict validation during decoding to detect invalid bitstreams  
 
 ---
 
@@ -31,9 +32,13 @@ Implements **Huffman coding**:
 
 Implements the **LZ78 dictionary-based compression algorithm**:
 
+- operates on raw bytes instead of characters  
 - incremental dictionary construction  
-- token-based encoding  
+- token-based encoding using `(index, byte)` pairs  
 - dictionary-driven decoding  
+- support for a final token representing leftover phrases  
+
+The implementation uses a **variable-length index representation**, where the number of bits used for dictionary references grows dynamically as the dictionary expands.
 
 ---
 
@@ -44,7 +49,7 @@ Responsible for binary serialization and deserialization:
 - defines a custom binary container format  
 - stores algorithm identifier and version  
 - packs Huffman bitstrings into bytes  
-- serializes LZ78 tokens into binary form  
+- stores LZ78 data using bit-level encoding with variable-length indexes  
 - automatically detects algorithm during decompression  
 
 ---
@@ -92,15 +97,13 @@ Let:
 O(m + n \log n)
 \]
 
-In typical text input, \( n \) is small compared to \( m \).
-
 ---
 
 ### Space Complexity
 
 - frequency table: \( O(n) \)  
 - Huffman tree: \( O(n) \)  
-- encoded bit representation: \( O(m) \)  
+- encoded representation: \( O(m) \)  
 
 ### Overall
 
@@ -114,14 +117,14 @@ O(m + n)
 
 Let:
 
-- \( m \) = length of input string  
+- \( m \) = length of input data in bytes  
 - \( k \) = number of dictionary entries  
 
 ### Time Complexity
 
 #### Encoding
 
-Each character is processed once, and dictionary lookups are average \( O(1) \):
+Each byte is processed once, and dictionary lookups are average \( O(1) \):
 
 \[
 O(m)
@@ -139,7 +142,7 @@ O(m)
 
 ### Space Complexity
 
-The dictionary grows dynamically. In the worst case:
+The dictionary grows dynamically:
 
 \[
 O(k) \le O(m)
@@ -163,48 +166,52 @@ Huffman coding and LZ78 represent two fundamentally different approaches:
 - Huffman: \( O(m + n \log n) \)  
 - LZ78: \( O(m) \)  
 
-In practice, both are efficient for typical file sizes.
+In practice, both are efficient.
 
-However, compression ratio depends strongly on:
+Compression performance depends strongly on:
 
 - character frequency distribution  
 - repetition patterns  
-- text structure  
+- input structure  
 
 ---
 
 # Empirical Compression Ratio Comparison
 
-Empirical evaluation was performed using natural-language text collected from multiple sources.
+Empirical evaluation was performed using natural-language text collected from multiple independent sources.
 
-Instead of repeating the same text, a corpus was constructed by combining independent text files such as articles from Wikipedia and books from Project Gutenberg. This avoids artificial repetition and better represents realistic input.
+### Corpus Sources
 
-For each target size, a prefix of the corpus was used. Both algorithms were applied to the exact same inputs.
+- Wikipedia articles  
+- Project Gutenberg books  
+
+This avoids artificial repetition and better represents realistic input.
 
 ---
 
 ## Results Table
 
-
 | Input | Original (B) | Huffman (B) | LZ78 (B) | H ratio | L ratio |
-|------|-------------|-------------|----------|--------|--------|
-| 1kB  | 1030        | 817         | 2698     | 0.793  | 2.619  |
-| 4kB  | 4118        | 2646        | 8767     | 0.643  | 2.129  |
-| 16kB | 16525       | 9618        | 29191    | 0.582  | 1.766  |
-| 64kB | 66075       | 37490       | 99305    | 0.567  | 1.503  |
-| 256kB| 265516      | 148780      | 349545   | 0.560  | 1.316  |
-| 1MB  | 1066911     | 586648      | 1198010  | 0.550  | 1.123  |
-| 4MB  | 4309826     | 2441763     | 4243675  | 0.567  | 0.985  |
-| 16MB | 17182048    | 9916013     | 15173153 | 0.577  | 0.883  |
+|------|-------------|-------------|----------|---------|---------|
+| 1kB  | 1030        | 817         |      815 | 0.793 | 0.791 |
+| 4kB  | 4118        | 2646 | 2886 | 0.643 | 0.701 |
+| 16kB | 16525       | 9618 | 10465 | 0.582 | 0.633 |
+| 64kB | 66075       | 37490 | 38765 | 0.567 | 0.587 |
+| 256kB| 265516      | 148780 | 148122 | 0.560 | 0.558 |
+| 1MB  | 1066911     | 586648 | 546885 | 0.550 | 0.513 |
+| 4MB  | 4309826     | 2441763 | 2075502 | 0.567 | 0.482 |
+| 16MB | 17182048    | 9916013 | 7901506 | 0.577 | 0.460 |
+
 ---
 
 ## Observations
 
-- Huffman coding consistently achieves stable compression ratios around 0.55–0.58 for larger inputs.
-- LZ78 performs poorly on small inputs due to dictionary overhead and fixed-size (32-bit) index storage.
-- As input size increases, LZ78 improves and eventually becomes effective for larger files.
-- For realistic natural-language input, LZ78 does not achieve extreme compression ratios, unlike when artificial repetition is used.
-- The results now reflect real-world behavior, where compression depends on actual structure and repetition in the data.
+- Huffman achieves stable compression ratios (~0.55–0.58)  
+- LZ78 performs weaker on small inputs due to dictionary overhead  
+- LZ78 improves significantly as input size increases  
+- For large inputs, LZ78 reaches ~0.45–0.50  
+- Variable-length indexes improve LZ78 efficiency  
+- Results reflect realistic natural-language behavior  
 
 ---
 
@@ -234,19 +241,30 @@ Compressed data is stored in a custom binary container format.
 ### LZ78
 
 - token count  
-- for each token:
-  - index  
-  - UTF-8 character bytes  
+- bit-packed token stream  
+
+Each token is encoded as:
+
+- variable-length index  
+- 1-bit marker  
+- optional 8-bit byte  
+
+This ensures minimal storage overhead.
 
 ---
 
-Huffman bitstrings are packed at the bit level into actual bytes.
+## Bit-Level Encoding
 
-This ensures:
+Both algorithms use bit-level packing:
 
-- true binary storage (no `"0"` / `"1"` strings)  
-- independence from runtime structures  
-- files remain valid after program exit  
+- Huffman → variable-length codes  
+- LZ78 → variable-length indexes  
+
+This avoids:
+
+- storing data as text (`"0"` / `"1"`)  
+- unnecessary padding  
+- fixed-width overhead  
 
 ---
 
@@ -255,14 +273,13 @@ This ensures:
 Possible improvements include:
 
 - limiting dictionary size in LZ78  
-- Using variable-length or smaller index encoding in LZ78  
 - canonical Huffman codes  
 - stream-based compression  
 - additional compression algorithms  
 
-A key limitation:
+### Limitation
 
-> The current LZ78 implementation does not limit dictionary size, which may lead to increased memory usage.
+> LZ78 dictionary growth may increase memory usage for very large inputs.
 
 ---
 
