@@ -94,15 +94,15 @@ docs/comparison_output.txt
 ```
 ---
 
-# What Was Tested and How?
+## What Was Tested and How?
 
 ---
 
-## 1. Huffman Coding
+### 1. Huffman Coding
 
 Test file: `tests/test_huffman.py`
 
-### Roundtrip Correctness
+#### Roundtrip Correctness
 
 Example:
 
@@ -122,7 +122,7 @@ This verifies:
 
 ---
 
-### Edge Cases
+#### Edge Cases
 
 - empty string  
 - single repeated character (e.g. "aaaaaa")  
@@ -130,7 +130,7 @@ This verifies:
 
 ---
 
-### Invalid Input Handling
+#### Invalid Input Handling
 
 The decoder is tested to ensure it raises errors for:
 
@@ -142,7 +142,7 @@ This ensures strict validation of corrupted or malformed compressed data.
 
 ---
 
-### Many-Character Huffman Test
+#### Many-Character Huffman Test
 
 A test was added using more than 256 different Unicode characters.
 
@@ -150,19 +150,19 @@ This ensures that the implementation works correctly when the number of distinct
 
 ---
 
-### Random and Diverse Input
+#### Random and Diverse Input
 
 Additional tests use diverse Unicode input to ensure the algorithm behaves correctly with a wide range of character distributions.
 
 ---
 
-## 2. LZ78
+### 2. LZ78
 
 Test file: `tests/test_lz78.py`
 
 ---
 
-### Implementation Details
+#### Implementation Details
 
 The final LZ78 implementation operates on raw bytes, not Python strings.  
 This avoids UTF-8 overhead and improves compression efficiency.
@@ -181,7 +181,7 @@ Where:
 
 ---
 
-### Roundtrip Correctness
+#### Roundtrip Correctness
 
 Example:
 
@@ -194,7 +194,7 @@ assert restored == data
 
 ---
 
-### Additional Cases
+#### Additional Cases
 
 - repetitive input  
 - structured input  
@@ -203,7 +203,7 @@ assert restored == data
 
 ---
 
-### Token Validation
+#### Token Validation
 
 The tests verify that:
 
@@ -213,7 +213,7 @@ The tests verify that:
 
 ---
 
-### Invalid Token Handling
+#### Invalid Token Handling
 
 The decoder is tested against invalid inputs:
 
@@ -226,7 +226,7 @@ The decoder is tested against invalid inputs:
 
 ---
 
-### Special Case: Final Leftover Token
+#### Special Case: Final Leftover Token
 
 Tests were added for cases where the final phrase already exists in the dictionary.
 
@@ -240,7 +240,7 @@ These tests verify that the final token `[index, -1]` is used correctly and only
 
 ---
 
-## 3. Direct Encoding and Storage Tests
+### 3. Direct Encoding and Storage Tests
 
 Test files:
 
@@ -261,7 +261,7 @@ They ensure that the implementation matches the expected algorithm behavior exac
 
 ---
 
-## 4. End-to-End Pipeline Testing
+### 4. End-to-End Pipeline Testing
 
 Test file: `tests/test_end_to_end.py`
 
@@ -281,7 +281,7 @@ Invalid compressed data is also tested to ensure safe failure.
 
 ---
 
-## 5. File-Based Integration Testing
+### 5. File-Based Integration Testing
 
 Test file: `tests/test_file_pipeline.py`
 
@@ -296,7 +296,7 @@ This ensures that the complete file-processing pipeline works correctly for both
 
 ---
 
-## 6. Realistic Natural-Language Testing
+### 6. Realistic Natural-Language Testing
 
 Test file: `tests/test_realistic_input.py`
 
@@ -306,7 +306,7 @@ A realistic text file is used:
 tests/data/realistic_text.txt
 ```
 
-### Procedure
+#### Procedure
 
 - read the file  
 - compress using both algorithms  
@@ -317,7 +317,7 @@ This provides an integration-style test with real-world input.
 
 ---
 
-## 7. Large Corpus-Based Testing
+### 7. Large Corpus-Based Testing
 
 Test file: `tests/test_large_input.py`
 
@@ -340,7 +340,7 @@ These tests are important because:
 
 ---
 
-## 8. Compression Ratio Testing
+### 8. Compression Ratio Testing
 
 Test file: `tests/test_compression_ratio.py`
 
@@ -354,7 +354,7 @@ They ensure that:
 
 ---
 
-## 9. Direct Storage and Bit-Level Testing
+### 9. Direct Storage and Bit-Level Testing
 
 Test file: `tests/test_storage.py`
 
@@ -375,7 +375,7 @@ These tests are important because:
 - bit-level errors may not be visible otherwise  
 - storage format correctness is verified explicitly  
 
-#### Natural-Language Corpus
+##### Natural-Language Corpus
 
 A corpus is constructed from multiple independent text files:
 
@@ -387,7 +387,7 @@ This avoids artificial repetition and better represents real input.
 
 ---
 
-#### Procedure
+##### Procedure
 
 For each target size:
 
@@ -398,7 +398,7 @@ For each target size:
 
 ---
 
-#### Expected Behavior
+##### Expected Behavior
 
 - Huffman should consistently reduce file size  
 - LZ78 should:
@@ -408,7 +408,7 @@ For each target size:
 
 ---
 
-#### Purpose
+##### Purpose
 
 These tests ensure that:
 
