@@ -375,7 +375,7 @@ These tests are important because:
 - bit-level errors may not be visible otherwise  
 - storage format correctness is verified explicitly  
 
-##### Natural-Language Corpus
+#### Natural-Language Corpus
 
 A corpus is constructed from multiple independent text files:
 
@@ -387,7 +387,7 @@ This avoids artificial repetition and better represents real input.
 
 ---
 
-##### Procedure
+#### Procedure
 
 For each target size:
 
@@ -398,7 +398,7 @@ For each target size:
 
 ---
 
-##### Expected Behavior
+#### Expected Behavior
 
 - Huffman should consistently reduce file size  
 - LZ78 should:
@@ -408,7 +408,7 @@ For each target size:
 
 ---
 
-##### Purpose
+#### Purpose
 
 These tests ensure that:
 
