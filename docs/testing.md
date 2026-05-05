@@ -92,16 +92,17 @@ A comparison snapshot is saved as:
 ```
 docs/comparison_output.txt
 ```
+---
 
-## What Was Tested and How?
+# What Was Tested and How?
 
 ---
 
-### 1. Huffman Coding
+## 1. Huffman Coding
 
-**Test file:** `tests/test_huffman.py`
+Test file: `tests/test_huffman.py`
 
-#### Roundtrip Correctness
+### Roundtrip Correctness
 
 Example:
 
@@ -121,19 +122,19 @@ This verifies:
 
 ---
 
-#### Edge Cases
+### Edge Cases
 
 - empty string  
-- single repeated character (e.g. `"aaaaaa"`)  
+- single repeated character (e.g. "aaaaaa")  
 - Unicode text  
 
 ---
 
-#### Invalid Input Handling
+### Invalid Input Handling
 
 The decoder is tested to ensure it raises errors for:
 
-- bitstrings containing characters other than `"0"` and `"1"`  
+- bitstrings containing characters other than "0" and "1"  
 - incomplete encoded bitstrings  
 - invalid traversal paths in the Huffman tree  
 
@@ -141,13 +142,29 @@ This ensures strict validation of corrupted or malformed compressed data.
 
 ---
 
-### 2. LZ78
+### Many-Character Huffman Test
 
-**Test file:** `tests/test_lz78.py`
+A test was added using more than 256 different Unicode characters.
 
-#### Implementation Details
+This ensures that the implementation works correctly when the number of distinct symbols is large, which is important for realistic text and matches theoretical assumptions of Huffman coding.
 
-The final LZ78 implementation operates on **raw bytes**, not Python strings.  
+---
+
+### Random and Diverse Input
+
+Additional tests use diverse Unicode input to ensure the algorithm behaves correctly with a wide range of character distributions.
+
+---
+
+## 2. LZ78
+
+Test file: `tests/test_lz78.py`
+
+---
+
+### Implementation Details
+
+The final LZ78 implementation operates on raw bytes, not Python strings.  
 This avoids UTF-8 overhead and improves compression efficiency.
 
 Each token has the form:
@@ -158,13 +175,13 @@ Each token has the form:
 
 Where:
 
-- `index` is a reference to a previously seen phrase  
-- `byte` is an integer in the range `0–255`  
-- a special value `-1` is used only in the final token  
+- index is a reference to a previously seen phrase  
+- byte is an integer in the range 0–255  
+- a special value -1 is used only in the final token  
 
 ---
 
-#### Roundtrip Correctness
+### Roundtrip Correctness
 
 Example:
 
@@ -177,15 +194,16 @@ assert restored == data
 
 ---
 
-#### Additional Cases
+### Additional Cases
 
 - repetitive input  
-- structured text  
+- structured input  
 - UTF-8 encoded text  
+- random byte input  
 
 ---
 
-#### Token Validation
+### Token Validation
 
 The tests verify that:
 
@@ -195,7 +213,7 @@ The tests verify that:
 
 ---
 
-#### Invalid Token Handling
+### Invalid Token Handling
 
 The decoder is tested against invalid inputs:
 
@@ -208,15 +226,50 @@ The decoder is tested against invalid inputs:
 
 ---
 
-### 3. End-to-End Pipeline Testing
+### Special Case: Final Leftover Token
 
-**Test file:** `tests/test_end_to_end.py`
+Tests were added for cases where the final phrase already exists in the dictionary.
+
+Examples include inputs such as:
+
+- aaa  
+- aaaa  
+- aba  
+
+These tests verify that the final token `[index, -1]` is used correctly and only when needed.
+
+---
+
+## 3. Direct Encoding and Storage Tests
+
+Test files:
+
+- `tests/test_lz78.py`  
+- `tests/test_huffman.py`  
+- `tests/test_storage.py`  
+
+Additional tests were added to check the encoded representation directly for small inputs where the expected output can be calculated manually.
+
+These tests include:
+
+- exact LZ78 token output for small inputs  
+- exact Huffman bitstring output for a small case  
+- validation of final-token behavior in LZ78  
+
+These tests are important because roundtrip testing alone is indirect.  
+They ensure that the implementation matches the expected algorithm behavior exactly.
+
+---
+
+## 4. End-to-End Pipeline Testing
+
+Test file: `tests/test_end_to_end.py`
 
 These tests verify the full in-memory pipeline:
 
-1. compress text using a selected algorithm  
-2. decompress the result  
-3. compare it with the original text  
+- compress text using a selected algorithm  
+- decompress the result  
+- compare it with the original text  
 
 This ensures:
 
@@ -228,24 +281,24 @@ Invalid compressed data is also tested to ensure safe failure.
 
 ---
 
-### 4. File-Based Integration Testing
+## 5. File-Based Integration Testing
 
-**Test file:** `tests/test_file_pipeline.py`
+Test file: `tests/test_file_pipeline.py`
 
 These tests verify the file-based workflow:
 
-1. write a UTF-8 text file  
-2. compress it  
-3. decompress it  
-4. compare the restored output  
+- write a UTF-8 text file  
+- compress it  
+- decompress it  
+- compare the restored output  
 
 This ensures that the complete file-processing pipeline works correctly for both algorithms.
 
 ---
 
-### 5. Realistic Natural-Language Testing
+## 6. Realistic Natural-Language Testing
 
-**Test file:** `tests/test_realistic_input.py`
+Test file: `tests/test_realistic_input.py`
 
 A realistic text file is used:
 
@@ -253,24 +306,74 @@ A realistic text file is used:
 tests/data/realistic_text.txt
 ```
 
-#### Procedure
+### Procedure
 
-1. read the file  
-2. compress using both algorithms  
-3. decompress  
-4. verify exact equality  
+- read the file  
+- compress using both algorithms  
+- decompress  
+- verify exact equality  
 
 This provides an integration-style test with real-world input.
 
 ---
 
-### 6. Compression Ratio Testing
+## 7. Large Corpus-Based Testing
 
-**Test file:** `tests/test_compression_ratio.py`
+Test file: `tests/test_large_input.py`
+
+Large input tests were added using prefixes from the natural-language corpus in:
+
+```
+data/corpus/
+```
+
+The tests use corpus-based inputs of several megabytes, including:
+
+- ~6 MB inputs for both algorithms  
+- ~10 MB inputs for both algorithms  
+
+These tests are important because:
+
+- errors may only appear for large inputs  
+- LZ78 dictionary growth affects behavior  
+- variable-length index sizes increase over time  
+
+---
+
+## 8. Compression Ratio Testing
+
+Test file: `tests/test_compression_ratio.py`
 
 These tests verify realistic compression performance.
 
+They ensure that:
+
+- Huffman consistently reduces file size  
+- LZ78 improves as input size increases  
+- results match expected real-world behavior  
+
 ---
+
+## 9. Direct Storage and Bit-Level Testing
+
+Test file: `tests/test_storage.py`
+
+These tests check the binary storage layer directly, not only through roundtrip compression.
+
+The tests verify:
+
+- bit packing with no padding  
+- bit packing with padding  
+- Huffman packed bit storage for a small hand-checkable case  
+- exact LZ78 bitstream output for small inputs  
+- correct handling of the LZ78 final token  
+- variable-length index width boundaries  
+
+These tests are important because:
+
+- roundtrip tests are indirect  
+- bit-level errors may not be visible otherwise  
+- storage format correctness is verified explicitly  
 
 #### Natural-Language Corpus
 

@@ -1,4 +1,6 @@
 import pytest
+import random
+
 
 from compression.huffman.codec import decode, encode
 
@@ -94,3 +96,51 @@ def test_huffman_single_symbol_rejects_invalid_branch() -> None:
 
     with pytest.raises(ValueError):
         decode(freq, "1")
+
+
+def test_huffman_exact_bits_for_small_input() -> None:
+    """
+    Test a small Huffman case where the expected bitstring can be checked by hand.
+
+    For "aaab", 'a' appears 3 times and 'b' appears 1 time.
+    With this implementation, 'b' gets code "0" and 'a' gets code "1".
+    Therefore "aaab" becomes "1110".
+    """
+    text = "aaab"
+    freq, bits = encode(text)
+
+    assert freq == {"a": 3, "b": 1}
+    assert bits == "1110"
+    assert decode(freq, bits) == text
+
+
+def test_huffman_many_different_unicode_characters() -> None:
+    """
+    Test Huffman coding with many different Unicode characters.
+
+    This checks that the implementation works when the number of
+    different characters is larger than 256.
+    """
+    text = "".join(chr(0x1000 + i) for i in range(400))
+
+    freq, bits = encode(text)
+    restored = decode(freq, bits)
+
+    assert restored == text
+    assert len(freq) == 400
+
+
+def test_huffman_random_text() -> None:
+    """
+    Test Huffman coding with random Unicode characters.
+
+    A fixed random seed is used so that the test is reproducible.
+    """
+    random.seed(12345)
+
+    text = "".join(chr(random.randint(0, 1000)) for _ in range(2000))
+
+    freq, bits = encode(text)
+    restored = decode(freq, bits)
+
+    assert restored == text
